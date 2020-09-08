@@ -30,7 +30,11 @@ Feel free to submit any feedback! If you want to submit an issue, use one of the
 ## Credits
 
 [ImGui](https://github.com/ocornut/imgui/): A great immediate GUI library.
+
 [Premake](https://premake.github.io/): For simplifying project file creation
+
 [Glad](https://glad.dav1d.de/): OpenGL loader
+
 [SDL2](https://www.libsdl.org/): Development library for graphics and peripherals
+
 [Armin Zare Zadeh](https://github.com/akzare) for his [c++ solution](https://github.com/akzare/Algorithms/blob/master/src/main/cpp/algorithms/graphtheory/TspDynamicProgrammingIterative.h) to the TSP problem
