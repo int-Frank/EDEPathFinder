@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <SDL.h>
 
-#include <iostream> // For debug
 #include <sstream>
 #include <fstream>
 
@@ -415,7 +414,6 @@ void DoOutputWindow()
       }
       else
       {
-        std::cout << "\n" << fileBuf << " saved!";
         trySave = false;
         ImGui::CloseCurrentPopup();
         std::ofstream ofs(fileBuf);

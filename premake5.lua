@@ -81,7 +81,7 @@ group ""
 
 project "EDEngineerPaths"
   location "./"
-  kind "ConsoleApp"
+  kind "WindowedApp"
   targetdir (projOutput)
   objdir (projOutputInt)
   systemversion "latest"

@@ -1,8 +1,6 @@
 #include "Path.h"
 #include "TSP.h"
 
-#include <iostream>
-
 typedef std::vector<std::map<SystemName, std::vector<ModuleGrade>>> PathMap;
 
 ModuleGrade::ModuleGrade()
@@ -390,11 +388,8 @@ std::vector<SystemNode> FindShortestPath()
   std::vector<SystemNode> bestPath;
   std::vector<SystemNode> currentPath;
 
-  int count = 0;
   for (auto const & path : paths)
   {
-    count++;
-    std::cout << "\nTesting path " << count << " of " << paths.size();
     currentPath.clear();
     FindShortestPath(path, currentPath);
     float dist = PathDistance(currentPath);
