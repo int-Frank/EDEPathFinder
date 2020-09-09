@@ -3,14 +3,14 @@
 
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
-#include "imgui_impl_opengl3.h"
+#include "imgui_impl_dx11.h"
 #include <stdio.h>
 #include <SDL.h>
+#include <SDL_syswm.h>
+#include <d3d11.h>
 
 #include <sstream>
 #include <fstream>
-
-#include <glad/glad.h>
 
 #include "GameData.h"
 #include "GUI.h"
@@ -19,8 +19,27 @@
 #include <windows.h>
 #include <winuser.h>
 
-SDL_GLContext g_GLContext = nullptr;
+#pragma comment(lib, "d3d11.lib")
+
 SDL_Window * g_pWindow = nullptr;
+
+// Data
+static ID3D11Device * g_pd3dDevice = NULL;
+static ID3D11DeviceContext * g_pd3dDeviceContext = NULL;
+static IDXGISwapChain * g_pSwapChain = NULL;
+static ID3D11RenderTargetView * g_mainRenderTargetView = NULL;
+
+Uint32 g_iconPixels[64*64] =
+{
+#include "icon.inl"
+};
+
+
+// Forward declarations of helper functions
+bool CreateDeviceD3D(HWND hWnd);
+void CleanupDeviceD3D();
+void CreateRenderTarget();
+void CleanupRenderTarget();
 
 void Alert(char const * format, ...)
 {
@@ -37,50 +56,33 @@ bool Init()
 {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
   {
-    Alert("Error: %s\n", SDL_GetError());
+    Alert("ERROR: %s\n", SDL_GetError());
     return false;
   }
 
-  // GL 3.0 + GLSL 130
-  const char * glsl_version = "#version 130";
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-
-  // Create g_pWindow with graphics context
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+  // Setup window
+  SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_ALLOW_HIGHDPI);
   g_pWindow = SDL_CreateWindow("ED Engineer Path Finder", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1231, 645, window_flags);
+  SDL_SysWMinfo wmInfo;
+  SDL_VERSION(&wmInfo.version);
+  SDL_GetWindowWMInfo(g_pWindow, &wmInfo);
+  HWND hwnd = (HWND)wmInfo.info.win.window;
   
+  SDL_Surface * surface = SDL_CreateRGBSurfaceFrom(g_iconPixels, 64, 64, 32, 64*4, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+  SDL_SetWindowIcon(g_pWindow, surface);
+  SDL_FreeSurface(surface);
+
+  // Initialize Direct3D
+  if (!CreateDeviceD3D(hwnd))
   {
-    Uint32 pixels[64*64] =
-    {
-#include "icon.inl"
-    };
-
-    SDL_Surface * surface = SDL_CreateRGBSurfaceFrom(pixels, 64, 64, 32, 64*4, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
-    SDL_SetWindowIcon(g_pWindow, surface);
-    SDL_FreeSurface(surface);
-  }
-
-  g_GLContext = SDL_GL_CreateContext(g_pWindow);
-  SDL_GL_MakeCurrent(g_pWindow, g_GLContext);
-  SDL_GL_SetSwapInterval(1); // Enable vsync
-
-  // Initialize OpenGL loader
-  int err = gladLoadGL() == 0;
-  if (err)
-  {
-    Alert("Failed to initialize OpenGL loader!");
-    return  false;
+    CleanupDeviceD3D();
+    return 1;
   }
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
+  ImGuiIO & io = ImGui::GetIO(); (void)io;
   //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
   //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
@@ -89,19 +91,19 @@ bool Init()
   //ImGui::StyleColorsClassic();
 
   // Setup Platform/Renderer bindings
-  ImGui_ImplSDL2_InitForOpenGL(g_pWindow, g_GLContext);
-  ImGui_ImplOpenGL3_Init(glsl_version);
+  ImGui_ImplSDL2_InitForD3D(g_pWindow);
+  ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
   return true;
 }
 
 void ShutDown()
 {
-  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplDX11_Shutdown();
   ImGui_ImplSDL2_Shutdown();
   ImGui::DestroyContext();
 
-  SDL_GL_DeleteContext(g_GLContext);
+  CleanupDeviceD3D();
   SDL_DestroyWindow(g_pWindow);
   SDL_Quit();
 }
@@ -478,7 +480,7 @@ void Run()
     }
 
     // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplDX11_NewFrame();
     ImGui_ImplSDL2_NewFrame(g_pWindow);
     ImGui::NewFrame();
 
@@ -493,12 +495,11 @@ void Run()
 
     // Rendering
     ImGui::Render();
-    ImGuiIO & io = ImGui::GetIO(); (void)io;
-    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    SDL_GL_SwapWindow(g_pWindow);
+    g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
+    g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, (float *)&clear_color);
+    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+    g_pSwapChain->Present(1, 0); // Present with vsync
   }
 }
 
@@ -533,6 +534,71 @@ void Tests()
   {
     //Start system = Shinrarta Dezhra, Modules: Power distributor, Shileds, Shiled booster
     float f = Distance({sShinrartaDezhra, sLeesti, sWyrd, sLaksak});
+  }
+}
+
+// Helper functions
+
+bool CreateDeviceD3D(HWND hWnd)
+{
+  // Setup swap chain
+  DXGI_SWAP_CHAIN_DESC sd;
+  ZeroMemory(&sd, sizeof(sd));
+  sd.BufferCount = 2;
+  sd.BufferDesc.Width = 0;
+  sd.BufferDesc.Height = 0;
+  sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  sd.BufferDesc.RefreshRate.Numerator = 60;
+  sd.BufferDesc.RefreshRate.Denominator = 1;
+  sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+  sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+  sd.OutputWindow = hWnd;
+  sd.SampleDesc.Count = 1;
+  sd.SampleDesc.Quality = 0;
+  sd.Windowed = TRUE;
+  sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+
+  UINT createDeviceFlags = 0;
+  //createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+  D3D_FEATURE_LEVEL featureLevel;
+  const D3D_FEATURE_LEVEL featureLevelArray[2] ={D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0,};
+  if (D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext) != S_OK)
+    return false;
+
+  CreateRenderTarget();
+  return true;
+}
+
+void CleanupDeviceD3D()
+{
+  CleanupRenderTarget();
+  if (g_pSwapChain)
+  {
+    g_pSwapChain->Release(); g_pSwapChain = NULL;
+  }
+  if (g_pd3dDeviceContext)
+  {
+    g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = NULL;
+  }
+  if (g_pd3dDevice)
+  {
+    g_pd3dDevice->Release(); g_pd3dDevice = NULL;
+  }
+}
+
+void CreateRenderTarget()
+{
+  ID3D11Texture2D * pBackBuffer;
+  g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
+  g_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL, &g_mainRenderTargetView);
+  pBackBuffer->Release();
+}
+
+void CleanupRenderTarget()
+{
+  if (g_mainRenderTargetView)
+  {
+    g_mainRenderTargetView->Release(); g_mainRenderTargetView = NULL;
   }
 }
 

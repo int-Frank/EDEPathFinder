@@ -15,42 +15,10 @@ projOutputInt = "%{wks.location}/build/intermediate/%{prj.name}-%{cfg.buildcfg}"
 
 -- Include directories relative to root folder (solution directory)
 IncludeDir = {}
-IncludeDir["Glad"] = "%{wks.location}/3rdParty/GLAD/include"
 IncludeDir["SDL2"] = "%{wks.location}/3rdParty/SDL2/include"
 IncludeDir["ImGui"] = "%{wks.location}/3rdParty/ImGui"
 
 group "Depenencies"
-
-  project "Glad"
-    kind "StaticLib"
-    language "C"
-    staticruntime "on"
-    location "3rdParty/GLAD"
-    targetdir (projOutput)
-    objdir (projOutputInt)
-    
-    files
-    {
-      "3rdParty/GLAD/include/glad/glad.h",
-      "3rdParty/GLAD/include/KHR/khrplatform.h",
-      "3rdParty/GLAD/src/glad.c"
-    }
-
-    includedirs
-    {
-      "3rdParty/GLAD/include"
-    }
-    
-    filter "system:windows"
-      systemversion "latest"
-
-    filter "configurations:Debug"
-	  	runtime "Debug"
-	  	symbols "on"
-
-	  filter "configurations:Release"
-	  	runtime "Release"
-	  	optimize "on"
 
 project "ImGui"
     location "3rdParty/ImGui"
@@ -96,7 +64,6 @@ project "EDEngineerPaths"
 
   links
   {
-    "Glad",
     "ImGui",
     "3rdParty/SDL2/lib/x64/SDL2.lib",
     "3rdParty/SDL2/lib/x64/SDL2main.lib"
@@ -105,7 +72,6 @@ project "EDEngineerPaths"
   includedirs
   {
 		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.Glad}",
 		"%{IncludeDir.SDL2}"
   }
   
