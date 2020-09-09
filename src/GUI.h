@@ -46,6 +46,7 @@ public:
 
   void AddButton(MouseDownButton const & button);
 
+  size_t Size() const;
   void Render();
   int ActiveButton() const;
   void SetActiveButton(int index);

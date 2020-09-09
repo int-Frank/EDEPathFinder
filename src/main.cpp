@@ -250,9 +250,7 @@ void DoEngineersWindow()
 
 void DoModuleWindow()
 {
-  static bool isInit = false;
   static RadioButtons moduleClassButtons;
-
   static MouseDownButton moduleButtons[ModuleCOUNT] =
   {
 #undef ITEM2
@@ -262,12 +260,12 @@ void DoModuleWindow()
      UNROLL_MODULES
   };
 
-  if (!isInit)
+  if (moduleClassButtons.Size() == 0)
   {
     for (uint32_t i = 0; i < ModuleClassCOUNT; i++)
       moduleClassButtons.AddButton(MouseDownButton(ToString(ModuleClass(i)), ImVec2(70, 25), Default::clrMajor, Default::clrMinor));
-    isInit = true;
   }
+
   ImGui::SetNextWindowPos(ImVec2(5,70));
   ImGui::SetNextWindowSize(ImVec2(320, 570));
   ImGui::Begin("Modules", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);

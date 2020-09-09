@@ -127,6 +127,11 @@ void RadioButtons::Render()
   }
 }
 
+size_t RadioButtons::Size() const
+{
+  return m_buttons.size();
+}
+
 int RadioButtons::ActiveButton() const
 {
   return m_currentActive;
