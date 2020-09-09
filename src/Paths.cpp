@@ -103,7 +103,7 @@ static uint64_t FindContributions(EngineerName eIn, std::map<ModuleName, ModuleD
   return result;
 }
 
-static std::map<ModuleName, ModuleData> GetModules()
+static std::map<ModuleName, ModuleData> GetSelectedModules()
 {
   std::map<ModuleName, ModuleData> result;
   for (size_t i = 0; i < sizeof(g_GameData.selectedModules) * CHAR_BIT; i++)
@@ -114,7 +114,7 @@ static std::map<ModuleName, ModuleData> GetModules()
   return result;
 }
 
-static std::vector<EngineerName> GetEngineers()
+static std::vector<EngineerName> GetSelectedEngineers()
 {
   std::vector<EngineerName> result;
   for (size_t i = 0; i < sizeof(g_GameData.selectedEngineers) * CHAR_BIT; i++)
@@ -153,15 +153,18 @@ static void RemoveUnusedEngineers(std::vector<EngineerName> &engineers,
     uint64_t contributions = FindContributions(EngineerName(e), modules);
 
     bool needed = false;
-    for (auto & kv : modules)
+    if (contributions != 0)
     {
-      if ((contributions & (1ull << kv.first)) == 0)
-        continue;
-
-      if (kv.second.givenGrade < g_GameData.engineer[e].moduleGrade[kv.first])
+      for (auto & kv : modules)
       {
-        needed = true;
-        break;
+        if ((contributions & (1ull << kv.first)) == 0)
+          continue;
+
+        if (kv.second.givenGrade < g_GameData.engineer[e].moduleGrade[kv.first])
+        {
+          needed = true;
+          break;
+        }
       }
     }
 
@@ -171,8 +174,8 @@ static void RemoveUnusedEngineers(std::vector<EngineerName> &engineers,
 }
 
 //Find all the engineers who can upgrade each module to the highest grade.
-static void BuildUpgraders(std::vector<EngineerName> const & engineers,
-                           std::map<ModuleName, ModuleData> & modules)
+static void AssignEngineersToModules(std::vector<EngineerName> const & engineers,
+                                     std::map<ModuleName, ModuleData> & modules)
 {
   for (EngineerName e : engineers)
   {
@@ -185,7 +188,7 @@ static void BuildUpgraders(std::vector<EngineerName> const & engineers,
         kv.second.engineers.push_back(EngineerName(e));
         kv.second.grade = grade;
       }
-      else if (grade == kv.second.grade)
+      else if (grade > 0 && grade == kv.second.grade)
       {
         kv.second.engineers.push_back(EngineerName(e));
       }
@@ -193,14 +196,15 @@ static void BuildUpgraders(std::vector<EngineerName> const & engineers,
   }
 }
 
-static void FindPathSet(std::vector<std::vector<SystemName>> &output,
-                        std::vector<SystemName> &path,
-                        std::map<ModuleName, ModuleData>::const_iterator it,
-                        std::map<ModuleName, ModuleData>::const_iterator itEnd)
+static void AddSystemsAssociatedWithModule(std::map<ModuleName, ModuleData>::const_iterator it,
+                                           std::vector<SystemName> &path,
+                                           std::vector<std::vector<SystemName>> &output,
+                                           std::map<ModuleName, ModuleData>::const_iterator itEnd)
 {
   if (it == itEnd)
   {
-    output.push_back(path);
+    if (path.size() > 0)
+      output.push_back(path);
     return;
   }
 
@@ -209,34 +213,34 @@ static void FindPathSet(std::vector<std::vector<SystemName>> &output,
 
   for (auto e : it->second.engineers)
   {
-    bool exists = false;
+    bool hasThisEngineerSystem = false;
     for (auto s : path)
     {
       if (s == GetSystem(e))
       {
-        exists = true;
+        hasThisEngineerSystem = true;
         break;
       }
     }
 
-    if (!exists)
+    if (!hasThisEngineerSystem)
     {
       path.push_back(GetSystem(e));
-      FindPathSet(output, path, itNext, itEnd);
+      AddSystemsAssociatedWithModule(itNext, path, output, itEnd);
       path.pop_back();
     }
     else
     {
-      FindPathSet(output, path, itNext, itEnd);
+      AddSystemsAssociatedWithModule(itNext, path, output, itEnd);
     }
   }
 }
 
-static std::vector<std::vector<SystemName>> FindAllPaths(std::map<ModuleName, ModuleData> const &modules)
+static std::vector<std::vector<SystemName>> FindAllPathCombinations(std::map<ModuleName, ModuleData> const &modules)
 {
   std::vector<std::vector<SystemName>> output;
   std::vector<SystemName> path;
-  FindPathSet(output, path, modules.cbegin(), modules.cend());
+  AddSystemsAssociatedWithModule(modules.cbegin(), path, output, modules.cend());
 
   return output;
 }
@@ -260,15 +264,27 @@ std::map<SystemName, std::vector<ModuleGrade>> FillModuleMap(std::vector<SystemN
   return result;
 }
 
+static void RemoveDeadModules(std::map<ModuleName, ModuleData> &modules)
+{
+  for (auto it = modules.begin(); it != modules.end();)
+  {
+    if (it->second.engineers.size() == 0)
+      it = modules.erase(it);
+    else
+      it++;
+  }
+}
+
 PathMap GenerateAllPossiblePaths()
 {
-  std::map<ModuleName, ModuleData> modules = GetModules();
-  std::vector<EngineerName> engineers = GetEngineers();
+  std::map<ModuleName, ModuleData> modules = GetSelectedModules();
+  std::vector<EngineerName> engineers = GetSelectedEngineers();
 
-  BuildUpgraders(engineers, modules);
+  AssignEngineersToModules(engineers, modules);
   RemoveUnusedEngineers(engineers, modules);
+  RemoveDeadModules(modules);
 
-  std::vector<std::vector<SystemName>> allPaths = FindAllPaths(modules);
+  std::vector<std::vector<SystemName>> allPaths = FindAllPathCombinations(modules);
 
   PathMap result;
 
