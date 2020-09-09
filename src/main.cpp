@@ -16,14 +16,28 @@
 #include "GUI.h"
 #include "Path.h"
 
+#include <windows.h>
+#include <winuser.h>
+
 SDL_GLContext g_GLContext = nullptr;
 SDL_Window * g_pWindow = nullptr;
+
+void Alert(char const * format, ...)
+{
+  char buffer[1024];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, 255, format, args);
+  va_end(args);
+
+  MessageBoxA(NULL, buffer, "Message", MB_OK | MB_ICONERROR);
+}
 
 bool Init()
 {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
   {
-    printf("Error: %s\n", SDL_GetError());
+    Alert("Error: %s\n", SDL_GetError());
     return false;
   }
 
@@ -57,10 +71,10 @@ bool Init()
   SDL_GL_SetSwapInterval(1); // Enable vsync
 
   // Initialize OpenGL loader
-  bool err = gladLoadGL() == 0;
+  int err = gladLoadGL() == 0;
   if (err)
   {
-    fprintf(stderr, "Failed to initialize OpenGL loader!\n");
+    Alert("Failed to initialize OpenGL loader!");
     return  false;
   }
 

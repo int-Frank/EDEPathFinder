@@ -26,7 +26,6 @@ group "Depenencies"
     language "C"
     staticruntime "on"
     location "3rdParty/GLAD"
-    
     targetdir (projOutput)
     objdir (projOutputInt)
     
@@ -61,7 +60,7 @@ project "ImGui"
     systemversion "latest"
     language "C++"
     cppdialect "C++17"
-  staticruntime "on"
+    staticruntime "on"
   
     files 
     {
