@@ -34,7 +34,6 @@ Uint32 g_iconPixels[64*64] =
 #include "icon.inl"
 };
 
-
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
@@ -56,7 +55,7 @@ bool Init()
 {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
   {
-    Alert("ERROR: %s\n", SDL_GetError());
+    Alert("ERROR: %s", SDL_GetError());
     return false;
   }
 
@@ -75,8 +74,9 @@ bool Init()
   // Initialize Direct3D
   if (!CreateDeviceD3D(hwnd))
   {
+    Alert("ERROR: Failed to initialise Direct3D");
     CleanupDeviceD3D();
-    return 1;
+    return false;
   }
 
   // Setup Dear ImGui context
