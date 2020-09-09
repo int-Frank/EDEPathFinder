@@ -303,7 +303,7 @@ void DoMinimumLength(std::vector<SystemNode> const &subPath, std::vector<SystemN
   for (size_t i = 0; i < subPath.size(); i++)
   {
     Float3 pi = g_GameData.system[subPath[i].name].position;
-    for (int j = i; j < subPath.size(); j++)
+    for (size_t j = i; j < subPath.size(); j++)
     {
       Float3 pj = g_GameData.system[subPath[j].name].position;
 

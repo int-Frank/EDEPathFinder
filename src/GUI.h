@@ -2,7 +2,7 @@
 #define GUI_H
 
 #include <vector>
-#include "imgui.h"
+#include "ImGui/imgui.h"
 
 struct Default
 {
