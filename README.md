@@ -18,6 +18,8 @@ This app finds the shortest path to through all relevant engineers to upgrade a 
 
 This is a classic [travelling salesman problem](https://en.wikipedia.org/wiki/Travelling_salesman_problem). I've used a dynamic programming approach, which should give the exact solution. However, the time it take to find the solution grows exponentially with the number of systems. This shouldn't be noticeable with regular use, but for example you select every module and every engineer, it will take a few minutes to find a solution.
 
+For the case where there are multiple choices of engineer when upgrading a particular module (Felicity Farseer and Elvira Martuuk for the FSD for example), both paths are constructed and tested.
+
 ## Feedback
 
 Feel free to submit any feedback! If you want to submit an issue, use one of the following tags:
