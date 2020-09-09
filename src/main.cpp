@@ -23,18 +23,16 @@
 
 SDL_Window * g_pWindow = nullptr;
 
-// Data
 static ID3D11Device * g_pd3dDevice = NULL;
 static ID3D11DeviceContext * g_pd3dDeviceContext = NULL;
 static IDXGISwapChain * g_pSwapChain = NULL;
 static ID3D11RenderTargetView * g_mainRenderTargetView = NULL;
 
-Uint32 g_iconPixels[64*64] =
+uint32_t g_iconPixels[64*64] =
 {
 #include "icon.inl"
 };
 
-// Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
@@ -83,12 +81,9 @@ bool Init()
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO & io = ImGui::GetIO(); (void)io;
-  //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-  //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
-  //ImGui::StyleColorsClassic();
 
   // Setup Platform/Renderer bindings
   ImGui_ImplSDL2_InitForD3D(g_pWindow);
@@ -110,7 +105,7 @@ void ShutDown()
 
 void DoEngineersWindow()
 {
-  static MouseDownButton engineers[EngineerCOUNT] = 
+  static MouseDownButton engineerButtons[EngineerCOUNT] = 
   {
 #undef ITEM2
 #undef ITEM3
@@ -123,7 +118,7 @@ void DoEngineersWindow()
   static RadioButtons regions;
   static char const * engineerPriorities[] ={"1", "2", "3", "4", "5", "6", "7", "8", "9"}; //Ensure this aligns with GameData::[Min][Max]ModuleRank
 
-  if (!isInit)
+  if (!isInit) // Bit hacky...
   {
     for (uint32_t i = 0; i < RegionCOUNT; i++)
       regions.AddButton(MouseDownButton(ToString(Region(i)), ImVec2(120, 25), Default::clrMajor, Default::clrMinor));
@@ -139,10 +134,10 @@ void DoEngineersWindow()
 
   Region reg = Region(regions.ActiveButton());
 
-  if (regions.WasPressed())
+  if (regions.WasPressed() != -1)
   {
     for (uint32_t i = 0; i < EngineerCOUNT; i++)
-      engineers[i].SetState(false);
+      engineerButtons[i].SetState(false);
   }
 
   uint32_t const elePerRow = 2;
@@ -160,7 +155,7 @@ void DoEngineersWindow()
     placedEngineers++;
 
     ImGui::BeginGroup();
-    engineers[e].Render();
+    engineerButtons[e].Render();
 
     if (ImGui::IsItemHovered())
     {
@@ -192,9 +187,7 @@ void DoEngineersWindow()
     ImGui::Button(engineerPriorities[g_GameData.engineerPriorities[e] - 1], ImVec2(25, 40));
 
     if (ImGui::IsItemHovered())
-    {
       ImGui::SetTooltip("Priority value. Engineers with higher\npriority values will be visited first.");
-    }
 
     ImGui::PopStyleColor(3);
     ImGui::PopID();
@@ -219,19 +212,19 @@ void DoEngineersWindow()
   }
 
   ImGui::SetCursorPos(ImVec2(154, 579));
-  if (ImGui::Button("Select All", ImVec2(120, 25)))
+  if (ImGui::Button("Select All##Engineers", ImVec2(120, 25)))
   {
     for (uint32_t e = 0; e < EngineerCOUNT; e++)
     {
       if (GetRegion(GetSystem(EngineerName(e))) == reg)
-        engineers[e].SetState(true);
+        engineerButtons[e].SetState(true);
     }
   }
   ImGui::SameLine();
-  if (ImGui::Button("Clear", ImVec2(120, 25)))
+  if (ImGui::Button("Clear##Engineers", ImVec2(120, 25)))
   {
     for (uint32_t e = 0; e < EngineerCOUNT; e++)
-      engineers[e].SetState(false);
+      engineerButtons[e].SetState(false);
   }
   ImGui::SameLine();
   if (ImGui::Button("Reset Priorities", ImVec2(120, 25)))
@@ -246,7 +239,7 @@ void DoEngineersWindow()
   g_GameData.selectedEngineers = 0;
   for (uint32_t e = 0; e < EngineerCOUNT; e++)
   {
-    if (engineers[e].IsOn())
+    if (engineerButtons[e].IsOn())
       g_GameData.selectedEngineers |= (1ull << e);
     else
       g_GameData.selectedEngineers &= ~(1ull << e);
@@ -258,9 +251,9 @@ void DoEngineersWindow()
 void DoModuleWindow()
 {
   static bool isInit = false;
-  static RadioButtons moduleClasses;
+  static RadioButtons moduleClassButtons;
 
-  static MouseDownButton modules[ModuleCOUNT] =
+  static MouseDownButton moduleButtons[ModuleCOUNT] =
   {
 #undef ITEM2
 #undef ITEM3
@@ -272,7 +265,7 @@ void DoModuleWindow()
   if (!isInit)
   {
     for (uint32_t i = 0; i < ModuleClassCOUNT; i++)
-      moduleClasses.AddButton(MouseDownButton(ToString(ModuleClass(i)), ImVec2(70, 25), Default::clrMajor, Default::clrMinor));
+      moduleClassButtons.AddButton(MouseDownButton(ToString(ModuleClass(i)), ImVec2(70, 25), Default::clrMajor, Default::clrMinor));
     isInit = true;
   }
   ImGui::SetNextWindowPos(ImVec2(5,70));
@@ -280,23 +273,17 @@ void DoModuleWindow()
   ImGui::Begin("Modules", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
   ImGui::Text("Select Modules");
   ImGui::Spacing();
-  moduleClasses.Render();
+  moduleClassButtons.Render();
   ImGui::Separator();
 
-  static ModuleClass lastClass = mcCore;
-  ModuleClass currentClass = ModuleClass(moduleClasses.ActiveButton()); // TODO use WasPressed
-
-  if (lastClass != currentClass)
-  {
-    lastClass = currentClass;
-  }
+  ModuleClass currentClass = ModuleClass(moduleClassButtons.ActiveButton());
 
   for (uint32_t i = 0; i < ModuleCOUNT; i++)
   {
     if (GetModuleClass(ModuleName(i)) != currentClass)
       continue;
 
-    modules[i].Render();
+    moduleButtons[i].Render();
   }
 
   ImGui::SetCursorPos(ImVec2(60, 515));
@@ -307,7 +294,7 @@ void DoModuleWindow()
       if (GetModuleClass(ModuleName(i)) != currentClass)
         continue;
 
-      modules[i].SetState(false);
+      moduleButtons[i].SetState(false);
     }
   }
   ImGui::SameLine();
@@ -315,13 +302,13 @@ void DoModuleWindow()
   if (ImGui::Button("Clear All##ModuleClass", ImVec2(120, 25)))
   {
     for (uint32_t i = 0; i < ModuleCOUNT; i++)
-      modules[i].SetState(false);
+      moduleButtons[i].SetState(false);
   }
 
   g_GameData.selectedModules = 0;
   for (uint32_t i = 0; i < ModuleCOUNT; i++)
   {
-    if (modules[i].IsOn())
+    if (moduleButtons[i].IsOn())
       g_GameData.selectedModules |= (1ull << i);
     else
       g_GameData.selectedModules &= ~(1ull << i);
@@ -364,7 +351,7 @@ void DoOutputWindow()
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(0, 200, 0)));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(ImColor(0, 225, 0)));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(ImColor(0, 255, 0)));
-  static char buf[2048] = {};
+  static char buf[2048] = {}; // TODO temp buffer for now, but come up with a better solution
   if (ImGui::Button("Run!", ImVec2(50, 25)))
   {
     std::vector<SystemNode> path = FindShortestPath(); //TODO this should be in GameData.
@@ -450,22 +437,11 @@ void DoOutputWindow()
   ImGui::End();
 }
 
-// TODO Add save/load settings, or even connect with the game data to auto load unlocked engineers.
-//      Possible even connect with https: //coriolis.io/ for module list
-// TODO Separate the path finder engine from the UI. Maybe build into a separate lib.
-// TODO Use brute force to find a set of shortest paths to test against (up to about 10 systems per path should be fine)
-// TODO Develop a testing framework, that maybe loads in test cases from a file
-// TODO Allow users to add extra start systems
-// TODO Add ability to include an end system, in the case the user wants to go somewhere after upgrading
-// TODO Add window that displays path in 3D
 void Run()
 {
-  // Our state
   bool show_demo_window = false;
-  bool show_another_window = false;
   ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 
-  // Main loop
   bool done = false;
   while (!done)
   {

@@ -49,7 +49,7 @@ public:
   void Render();
   int ActiveButton() const;
   void SetActiveButton(int index);
-  bool WasPressed() const; // Returns true only if a button was pressed and the active button has changed
+  int WasPressed() const; // Returns > 0 only if a button was pressed and the active button has changed, -1 otherwise
 
 private:
   int m_currentActive;

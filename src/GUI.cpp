@@ -143,12 +143,12 @@ void RadioButtons::SetActiveButton(int index)
   m_buttons[index].SetState(true);
 }
 
-bool RadioButtons::WasPressed() const
+int RadioButtons::WasPressed() const
 {
   for (int i = 0; i < (int)m_buttons.size(); i++)
   {
     if (m_buttons[i].WasPressed())
-      return true;;
+      return i;;
   }
-  return false;
+  return -1;
 }
