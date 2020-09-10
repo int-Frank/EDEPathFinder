@@ -2,6 +2,10 @@
 
 This app finds the shortest path through all relevant engineers when upgrading a list of modules. I wrote this because with each new ship loadout, I found was bouncing back and forth across the bubble upgrading each module. I figured there probably exists a shortest path that would take me through all of them that would save me some time.
 
+## Download
+
+Check the latest release or [**download**](https://github.com/int-Frank/EDEPathFinder/releases/download/1.0.0/EDEngineerPaths.zip) it here.
+
 ## Use
 
  1. Select the system you want to start in. At the moment this is limited to only those which are home to an engineer
