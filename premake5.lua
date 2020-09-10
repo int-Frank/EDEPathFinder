@@ -29,11 +29,16 @@ project "EDEngineerPaths"
   
   files 
   {
+    "src/**.rc",
     "src/**.h",
+    "src/**.inl",
     "src/**.cpp",
     "src/ImGui/**.h",
     "src/ImGui/**.cpp",
   }
+
+  vpaths { ["Resources"] = {"src/*.rc", "src/resource.h"}}
+  -- vpaths { ["group"] = "pattern(s)" }
 
   links
   {
