@@ -359,7 +359,7 @@ void DoOutputWindow()
     for (auto const & node : path)
     {
       count++;
-      ss << count << ": " << ToString(node.name);
+      ss << count << ": " << ToString(GetEngineer(node.name)) << ", " << ToString(node.name);
       for (auto const & mg : node.modules)
         ss << "\n    G" << (int)mg.Grade() << ": " << ToString(mg.Name());
       ss << "\n";
