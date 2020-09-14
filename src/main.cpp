@@ -161,6 +161,10 @@ void DoEngineersWindow()
     {
       ImGui::BeginTooltip();
       ImGui::TextColored(ImVec4(Default::textHighlight2), "System: %s\t", ToString(GetSystem(EngineerName(e))));
+
+      float dist = (g_GameData.system[GetSystem(EngineerName(e))].position - g_GameData.system[g_GameData.startSystem].position).Length();
+      ImGui::TextColored(ImVec4(Default::textHighlight2), "%0.2fly from %s\t", dist, ToString(g_GameData.startSystem));
+
       for (int g = 5; g > 0; g--)
       {
         for (uint32_t t = 0; t < ModuleCOUNT; t++)
