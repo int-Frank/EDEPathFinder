@@ -368,6 +368,8 @@ void DoOutputWindow()
         ss << "\n    G" << (int)mg.Grade() << ": " << ToString(mg.Name());
       ss << "\n";
     }
+
+    ss << "\nTotal distance: " << PathDistance(path) << "ly";
     sprintf(buf, "%s", ss.str().c_str());
   }
   ImGui::Text("%s", buf);
