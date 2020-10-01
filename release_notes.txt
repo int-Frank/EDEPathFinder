@@ -1,0 +1,23 @@
+EDE Path Finder
+
+=======
+v 1.0.1
+=======
+
+# New Features
+
+- Added distance from start system for each engineer popup
+- Displays Engineer name as well as their home system in the output
+- Output also displays total distance (as the space-crow flies)
+
+=======
+v 1.0.0
+=======
+
+# New Features
+
+- Select any ungradable modules
+- Build your list of engineers from either the bubble or Colonia
+- Give engineers a priority (1-9) highest priority being 9
+- Set a system to start in
+- Save output to file

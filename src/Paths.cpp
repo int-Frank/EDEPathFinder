@@ -424,7 +424,7 @@ std::vector<SystemNode> FindShortestPath()
 float PathDistance(std::vector<SystemNode> const & path)
 {
   float dist = 0.f;
-  for (size_t i = 0; i < path.size() - 1; i++)
+  for (size_t i = 0; (i + 1) < path.size(); i++)
   {
     Float3 pi = g_GameData.system[path[i].name].position;
     Float3 pj = g_GameData.system[path[i + 1].name].position;
