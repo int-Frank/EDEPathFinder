@@ -4,7 +4,7 @@ This app finds the shortest path through all relevant engineers when upgrading a
 
 ## Download
 
-Check the latest release or [**download**](https://github.com/int-Frank/EDEPathFinder/releases/download/1.0.0/EDEngineerPaths.zip) it here.
+Check the latest release or [**download**](https://github.com/int-Frank/EDEPathFinder/releases/download/1.0.1/EDEngineerPaths.zip) it here.
 
 ## Use
 
