@@ -15,6 +15,7 @@
 #include "GameData.h"
 #include "GUI.h"
 #include "Path.h"
+#include "SimpleJsonParser.h"
 
 #include <windows.h>
 #include <winuser.h>
@@ -505,8 +506,88 @@ void DoOutputWindow()
   ImGui::End();
 }
 
+//#include <fstream>
+//void MakeJSON()
+//{
+//  std::ofstream ofs("EDEPaths.json");
+//
+//  if (!ofs.good())
+//    return;
+//
+//  ofs << "{";
+//
+//  // Systems
+//  {
+//    ofs << "\n  \"systems\":[";
+//    for (uint32_t i = 0; i < SystemCOUNT; i++)
+//    {
+//      ofs << "\n    {\"name\":\"" << ToString(SystemName(i)) << "\",\"position\":[" 
+//        << g_GameData.system[i].position[0] << ", "
+//        << g_GameData.system[i].position[1] << ", "
+//        << g_GameData.system[i].position[2] << "]}";
+//
+//      if (i < SystemCOUNT - 1)
+//        ofs << ",";
+//    }
+//    ofs << "\n  ],";
+//  }
+//
+//  // Modules
+//  {
+//    ofs << "\n  \"modules\":[";
+//    for (uint32_t i = 0; i < ModuleCOUNT; i++)
+//    {
+//      ofs << "\n    {\"name\":\"" << ToString(ModuleName(i)) << "\",\"class\":\"" 
+//        << ToString(GetModuleClass(ModuleName(i))) << "\"}";
+//
+//      if (i < ModuleCOUNT - 1)
+//        ofs << ",";
+//    }
+//    ofs << "\n  ],";
+//  }
+//
+//  // Engineers
+//  {
+//    ofs << "\n  \"engineers\":[";
+//    for (uint32_t e = 0; e < EngineerCOUNT; e++)
+//    {
+//      ofs << "\n    {";
+//      ofs << "\n      \"name\":\"" << ToString(EngineerName(e)) << "\",";
+//      ofs << "\n      \"system\":\"" << ToString(SystemName(GetSystem(EngineerName(e)))) << "\",";
+//      ofs << "\n      \"modules\":[";
+//
+//      bool first = true;
+//      for (uint32_t m = 0; m < ModuleCOUNT; m++)
+//      {
+//        if (g_GameData.engineer[e].moduleGrade[m] == 0)
+//          continue;
+//
+//        if (!first)
+//          ofs << ",";
+//        first = false;
+//
+//        ofs << "\n        {\"name\":\"" << ToString(ModuleName(m)) << "\",\"grade\":" << g_GameData.engineer[e].moduleGrade[m] << "}";
+//      }
+//
+//      ofs << "\n      ]";
+//      ofs << "\n    }";
+//
+//      if (e < EngineerCOUNT - 1)
+//        ofs << ",";
+//    }
+//    ofs << "\n  ]";
+//  }
+//
+//  ofs << "\n}";
+//}
+
 void Run()
 {
+  const std::vector<std::string> *pErrors = nullptr;
+  if (!LoadGameData())
+    char t = 0;
+  pErrors = GetParsingMessages();
+
   bool show_demo_window = false;
   ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 
