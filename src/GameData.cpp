@@ -42,12 +42,16 @@ GameData::GameData()
   : selectedEngineers(0)
   , selectedModules(0)
   , engineerPriorities{}
+  , moduleUpgradeLevel{}
   , startSystem(sShinrartaDezhra)
   , engineer{}
   , system{}
 {
-  for (uint32_t i = 0; i < EngineerCOUNT; i++)
-    engineerPriorities[i] = uint8_t(1);
+  for (uint32_t e = 0; e < EngineerCOUNT; e++)
+    engineerPriorities[e] = uint8_t(1);
+
+  for (uint32_t m = 0; m < ModuleCOUNT; m++)
+    moduleUpgradeLevel[m] = 0;
 
   //--------------------------------------------------------------------
   // Engineers

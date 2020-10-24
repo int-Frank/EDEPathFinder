@@ -252,15 +252,31 @@ void DoEngineersWindow()
   ImGui::End();
 }
 
+void FindMaxModulesGrades(int maxGrades[ModuleCOUNT])
+{
+  for (uint32_t e = 0; e < EngineerCOUNT; e++)
+  {
+    if ((g_GameData.selectedEngineers & (1ull << e)) == 0)
+      continue;
+
+    for (uint32_t m = 0; m < ModuleCOUNT; m++)
+    {
+      if ((int)g_GameData.engineer[e].moduleGrade[m] > maxGrades[m])
+        maxGrades[m] = g_GameData.engineer[e].moduleGrade[m];
+    }
+  }
+}
+
 void DoModuleWindow()
 {
+  static ImVec2 const buttonSize(247, 30);
   static RadioButtons moduleClassButtons;
   static MouseDownButton moduleButtons[ModuleCOUNT] =
   {
 #undef ITEM2
 #undef ITEM3
-#define ITEM2(a, c) MouseDownButton(ToString(m ## a), ImVec2(304, 30), Default::clrMajor, Default::clrMinor),
-#define ITEM3(a, c, str) MouseDownButton(ToString(m ## a), ImVec2(304, 30), Default::clrMajor, Default::clrMinor),
+#define ITEM2(a, c) MouseDownButton(ToString(m ## a), buttonSize, Default::clrMajor, Default::clrMinor),
+#define ITEM3(a, c, str) MouseDownButton(ToString(m ## a), buttonSize, Default::clrMajor, Default::clrMinor),
      UNROLL_MODULES
   };
 
@@ -278,25 +294,73 @@ void DoModuleWindow()
   moduleClassButtons.Render();
   ImGui::Separator();
 
+  int maxGrades[ModuleCOUNT] = {};
+  FindMaxModulesGrades(maxGrades);
+
   ModuleClass currentClass = ModuleClass(moduleClassButtons.ActiveButton());
 
-  for (uint32_t i = 0; i < ModuleCOUNT; i++)
+  char buf[32];
+  for (uint32_t m = 0; m < ModuleCOUNT; m++)
   {
-    if (GetModuleClass(ModuleName(i)) != currentClass)
+    if (GetModuleClass(ModuleName(m)) != currentClass)
       continue;
 
-    moduleButtons[i].Render();
+    if (maxGrades[m] < 1)
+    {
+      ImGui::PushID(1);
+      ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(Default::clrLightGrey));
+      ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(Default::clrLightGrey));
+      ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(Default::clrLightGrey));
+      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(Default::clrMinor));
+
+      ImGui::Button(ToString(ModuleName(m)), buttonSize);
+
+      ImGui::PopStyleColor(4);
+      ImGui::PopID();
+      continue;
+    }
+
+    moduleButtons[m].Render();
+
+    if (!moduleButtons[m].IsOn())
+      continue;
+
+    ImGui::SameLine();
+
+    ImGui::PushID(1);
+
+    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(Default::clrMajor));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(Default::clrMajor));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(Default::clrMinor));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(Default::clrMinor));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(Default::clrMinor));
+    ImGui::SetNextItemWidth(50.f);
+    sprintf(buf, "##modLevel%u", m);
+
+    if (g_GameData.moduleUpgradeLevel[m] < 1)
+      g_GameData.moduleUpgradeLevel[m] = 1;
+    if (g_GameData.moduleUpgradeLevel[m] > maxGrades[m])
+      g_GameData.moduleUpgradeLevel[m] = maxGrades[m];
+
+    ImGui::SliderInt(buf, &g_GameData.moduleUpgradeLevel[m], 1, maxGrades[m]);
+
+    // Need this as ImGui::SliderInt is bugged for ranges [x, x]
+    if (g_GameData.moduleUpgradeLevel[m] < 1)
+      g_GameData.moduleUpgradeLevel[m] = 1;
+
+    ImGui::PopStyleColor(5);
+    ImGui::PopID();
   }
 
   ImGui::SetCursorPos(ImVec2(60, 515));
   if (ImGui::Button("Clear##ModuleClass", ImVec2(120, 25)))
   {
-    for (uint32_t i = 0; i < ModuleCOUNT; i++)
+    for (uint32_t m = 0; m < ModuleCOUNT; m++)
     {
-      if (GetModuleClass(ModuleName(i)) != currentClass)
+      if (GetModuleClass(ModuleName(m)) != currentClass)
         continue;
 
-      moduleButtons[i].SetState(false);
+      moduleButtons[m].SetState(false);
     }
   }
   ImGui::SameLine();

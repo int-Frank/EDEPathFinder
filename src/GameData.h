@@ -197,6 +197,7 @@ struct GameData
   uint64_t selectedEngineers;
   uint64_t selectedModules;
   uint8_t engineerPriorities[EngineerCOUNT];
+  int moduleUpgradeLevel[ModuleCOUNT];
 
   SystemName startSystem;
 

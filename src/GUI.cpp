@@ -1,6 +1,7 @@
 
 #include "GUI.h"
 
+ImColor Default::clrLightGrey = ImColor(100, 100, 100);
 ImColor Default::clrMinor = ImColor(55, 55, 55);
 ImColor Default::clrMajor = ImColor(219, 95, 7);
 ImColor Default::textHighlight1 = ImColor(255, 0, 255);

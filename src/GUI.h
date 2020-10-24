@@ -6,6 +6,7 @@
 
 struct Default
 {
+  static ImColor clrLightGrey;
   static ImColor clrMinor;
   static ImColor clrMajor;
   static ImColor textHighlight1;
