@@ -34,7 +34,7 @@ struct Float3
     return data[i];
   }
 
-  Float3 operator-(Float3 const & other)
+  Float3 operator-(Float3 const & other) const
   {
     return Float3(data[0] - other.data[0],
       data[1] - other.data[1],

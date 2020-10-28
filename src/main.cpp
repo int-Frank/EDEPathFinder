@@ -583,11 +583,6 @@ void DoOutputWindow()
 
 void Run()
 {
-  const std::vector<std::string> *pErrors = nullptr;
-  if (!LoadGameData())
-    char t = 0;
-  pErrors = GetParsingMessages();
-
   bool show_demo_window = false;
   ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 
