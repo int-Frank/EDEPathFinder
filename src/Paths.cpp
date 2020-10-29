@@ -1,127 +1,65 @@
 #include "Path.h"
 #include "TSP.h"
 
-typedef std::vector<std::map<SystemName, std::vector<ModuleGrade>>> PathMap;
+#define GET_SYSTEM(engineerName) g_GameData.engineers.at(engineerName).system
 
-ModuleGrade::ModuleGrade()
-  : m_data(0)
+static struct ModuleItem
 {
-
-}
-
-ModuleGrade::ModuleGrade(ModuleName name, uint8_t grade)
-  : m_data(0)
-{
-  SetName(name);
-  SetGrade(grade);
-}
-
-void ModuleGrade::SetName(ModuleName name)
-{
-  m_data = (m_data & 0xFF) | (uint16_t(name) << 8);
-}
-
-void ModuleGrade::SetGrade(uint8_t grade)
-{
-  m_data = (m_data & 0xFF00) | (uint16_t(grade));
-}
-
-ModuleName ModuleGrade::Name() const
-{
-  return ModuleName(m_data >> 8);
-}
-
-uint8_t ModuleGrade::Grade() const
-{
-  return uint8_t(m_data & 0xFF);
-}
-
-struct ModuleData
-{
-  ModuleData()
-    : grade(0)
-    , givenGrade(0)
-  {
-  };
-
-  uint32_t givenGrade;
-  uint32_t grade;
-  std::vector<EngineerName> engineers;
+  std::string name;
+  bool active;
+  int grade;
+  int gradeTarget;
+  std::set<std::string> engineers;
 };
 
-static void Scrub(EngineerName e, std::map<ModuleName, ModuleData> &modules, std::vector<EngineerName> &engineers)
-{
-  for (auto & kv : modules)
-  {
-    for (size_t i = 0; i < kv.second.engineers.size(); i++)
-    {
-      if (kv.second.engineers[i] == e)
-      {
-        kv.second.engineers[i] = kv.second.engineers.back();
-        kv.second.engineers.pop_back();
-        break;
-      }
-    }
-  }
+typedef std::list<ModuleItem> ModuleItemList;
+typedef std::set<std::string> EngineerList;
 
-  for (size_t i = 0; i < engineers.size(); i++)
+static std::list<ModuleItem>::iterator Find(ModuleItemList & moduleList, std::string const & name)
+{
+  auto it = moduleList.begin();
+  for (; it != moduleList.end(); it++)
   {
-    if (engineers[i] == e)
-    {
-      engineers[i] = engineers.back();
-      engineers.pop_back();
+    if (it->name == name)
       break;
-    }
   }
+  return it;
 }
 
-static bool IsPrimary(EngineerName e, std::map<ModuleName, ModuleData> const &modules)
+static ModuleItemList GetSelectedModules()
 {
-  for (auto const & kv : modules)
+  ModuleItemList result;
+  for (auto const & kv : g_GameData.selectedModules)
   {
-    if (kv.second.engineers.size() == 1 && kv.second.engineers[0] == e)
-      return true;
-  }
-  return false;
-}
-
-
-static uint64_t FindContributions(EngineerName eIn, std::map<ModuleName, ModuleData> const &modules)
-{
-  uint64_t result = 0;
-  for (auto const & kv : modules)
-  {
-    for (auto e : kv.second.engineers)
-    {
-      if (e == eIn)
-      {
-        result |= (1ull << kv.first);
-        break;
-      }
-    }
+    ModuleItem item;
+    item.grade = 0;
+    item.gradeTarget = kv.second.gradeTarget;
+    item.name = kv.first;
+    result.push_back(item);
   }
   return result;
 }
 
-static std::map<ModuleName, ModuleData> GetSelectedModules()
-{
-  std::map<ModuleName, ModuleData> result;
-  for (size_t i = 0; i < sizeof(g_GameData.selectedModules) * CHAR_BIT; i++)
-  {
-    if ((g_GameData.selectedModules & (1ull << i)) != 0)
-      result.insert(std::pair<ModuleName, ModuleData>(ModuleName(i), ModuleData()));
-  }
-  return result;
-}
+//static EngineerList GetEssentialEngineers(std::list<ModuleItem> const & modules)
+//{
+//  EngineerList result;
+//
+//  for (auto const & item : modules)
+//  {
+//    if (item.engineers.size() == 1)
+//      result.insert(*item.engineers.begin());
+//  }
+//
+//  return result;
+//}
 
-static std::vector<EngineerName> GetSelectedEngineers()
+static EngineerList GetEngineerList(ModuleItemList const & modules)
 {
-  std::vector<EngineerName> result;
-  for (size_t i = 0; i < sizeof(g_GameData.selectedEngineers) * CHAR_BIT; i++)
-  {
-    if ((g_GameData.selectedEngineers & (1ull << i)) != 0)
-      result.push_back(EngineerName(i));
-  }
+  EngineerList result;
+
+  for (auto const & item : modules)
+    result.insert(item.engineers.begin(), item.engineers.end());
+
   return result;
 }
 
@@ -129,170 +67,93 @@ static std::vector<EngineerName> GetSelectedEngineers()
 //   - Engineer A can upgrade both module M and N to grade 5.
 //   - Engineer B can upgrade module N to grade 5.
 //   - We must visit engineer A to upgrade M, but can also upgrade N while we are there, therefore
-//     engineer B offers us nothing.
-static void RemoveUnusedEngineers(std::vector<EngineerName> &engineers, 
-                                  std::map<ModuleName, ModuleData> &modules)
+//     engineer B ois redundant.
+//static void RemoveUnusedEngineers(std::list<ModuleItem> &modules)
+//{
+//  std::set<std::string> essentialEngineers = GetEssentialEngineers(modules);
+//  std::list<ModuleItem> modulesTemp = modules;
+//
+//  // Remove all modules containing the essential engineers. This will remove any
+//  // unwanted engineers.
+//  for (auto engineerName : essentialEngineers)
+//  {
+//    for (auto it = modulesTemp.begin(); it != modulesTemp.end();)
+//    {
+//      if (it->engineers.find(engineerName) != it->engineers.end())
+//        it = modulesTemp.erase(it);
+//      else
+//        it++;
+//    }
+//  }
+//  
+//  std::set<std::string> remainingEngineers = GetEngineerList(modulesTemp);
+//  remainingEngineers.insert(essentialEngineers.begin(), essentialEngineers.end());
+//
+//  // Remove any engineers from modules that are not in the remaining engineers list
+//  for (auto & item : modules)
+//  {
+//    for (auto it = item.engineers.begin(); it != item.engineers.end();)
+//    {
+//      if (remainingEngineers.find(*it) == remainingEngineers.end())
+//        it = item.engineers.erase(it);
+//      else
+//        it++;
+//    }
+//  }
+//}
+
+// Find all the engineers who can upgrade each module to the required grade, or the
+// engineer(s) who can upgrade the module closest to the required grade.
+static void AssignEngineersToModules(ModuleItemList & modules)
 {
-  for (EngineerName e : engineers)
+  for (auto const & engineerName : g_GameData.selectedEngineers)
   {
-    if (IsPrimary(e, modules))
+    for (auto const & kvmg : g_GameData.engineers.at(engineerName).moduleGrades)
     {
-      for (auto & kv : modules)
+      auto it = Find(modules, kvmg.first);
+      if (it == modules.end())
+        continue;
+
+      if (kvmg.second >= it->gradeTarget)
       {
-        if (g_GameData.engineer[e].moduleGrade[kv.first] > kv.second.givenGrade)
-          kv.second.givenGrade = g_GameData.engineer[e].moduleGrade[kv.first];
-      }
-    }
-  }
-
-  for (EngineerName e : engineers)
-  {
-    if (IsPrimary(e, modules))
-      continue;
-
-    uint64_t contributions = FindContributions(EngineerName(e), modules);
-
-    bool needed = false;
-    if (contributions != 0)
-    {
-      for (auto & kv : modules)
-      {
-        if ((contributions & (1ull << kv.first)) == 0)
-          continue;
-
-        if (kv.second.givenGrade < g_GameData.engineer[e].moduleGrade[kv.first])
+        if (it->grade < it->gradeTarget)
         {
-          needed = true;
-          break;
+          it->engineers.clear();
+          it->grade = it->gradeTarget;
         }
+
+        it->engineers.insert(engineerName);
       }
-    }
-
-    if (!needed)
-      Scrub(e, modules, engineers);
-  }
-}
-
-//Find all the engineers who can upgrade each module to the highest grade.
-static void AssignEngineersToModules(std::vector<EngineerName> const & engineers,
-                                     std::map<ModuleName, ModuleData> & modules)
-{
-  for (EngineerName e : engineers)
-  {
-    for (auto & kv : modules)
-    {
-      uint32_t grade = g_GameData.engineer[e].moduleGrade[kv.first];
-      if (grade > kv.second.grade)
+      else if (kvmg.second > it->grade)
       {
-        kv.second.engineers.clear();
-        kv.second.engineers.push_back(EngineerName(e));
-        kv.second.grade = grade;
+        it->engineers.clear();
+        it->engineers.insert(engineerName);
+        it->grade = kvmg.second;
       }
-      else if (grade > 0 && grade == kv.second.grade)
+      else if (kvmg.second == it->grade)
       {
-        kv.second.engineers.push_back(EngineerName(e));
-      }
-    }
-  }
-}
-
-static void AddSystemsAssociatedWithModule(std::map<ModuleName, ModuleData>::const_iterator it,
-                                           std::vector<SystemName> &path,
-                                           std::vector<std::vector<SystemName>> &output,
-                                           std::map<ModuleName, ModuleData>::const_iterator itEnd)
-{
-  if (it == itEnd)
-  {
-    if (path.size() > 0)
-      output.push_back(path);
-    return;
-  }
-
-  auto itNext = it;
-  itNext++;
-
-  for (auto e : it->second.engineers)
-  {
-    bool hasThisEngineerSystem = false;
-    for (auto s : path)
-    {
-      if (s == GetSystem(e))
-      {
-        hasThisEngineerSystem = true;
-        break;
-      }
-    }
-
-    if (!hasThisEngineerSystem)
-    {
-      path.push_back(GetSystem(e));
-      AddSystemsAssociatedWithModule(itNext, path, output, itEnd);
-      path.pop_back();
-    }
-    else
-    {
-      AddSystemsAssociatedWithModule(itNext, path, output, itEnd);
-    }
-  }
-}
-
-static std::vector<std::vector<SystemName>> FindAllPathCombinations(std::map<ModuleName, ModuleData> const &modules)
-{
-  std::vector<std::vector<SystemName>> output;
-  std::vector<SystemName> path;
-  AddSystemsAssociatedWithModule(modules.cbegin(), path, output, modules.cend());
-
-  return output;
-}
-
-std::map<SystemName, std::vector<ModuleGrade>> FillModuleMap(std::vector<SystemName> const &path, std::map<ModuleName, ModuleData> const & modules)
-{
-  std::map<SystemName, std::vector<ModuleGrade>> result;
-
-  for (auto s : path)
-  {
-    for (auto const & kv : modules)
-    {
-      for (auto e : kv.second.engineers)
-      {
-        if (GetSystem(e) == s)
-          result[s].push_back(ModuleGrade(kv.first, kv.second.grade));
+        it->engineers.insert(engineerName);
       }
     }
   }
 
-  return result;
+  modules.sort([](const ModuleItem & a, const ModuleItem & b)
+    {
+      return a.engineers.size() < b.engineers.size();
+    });
 }
 
-static void RemoveDeadModules(std::map<ModuleName, ModuleData> &modules)
+static void RemoveDeadModules(std::list<ModuleItem> & modules)
 {
   for (auto it = modules.begin(); it != modules.end();)
   {
-    if (it->second.engineers.size() == 0)
+    if (it->engineers.size() == 0)
       it = modules.erase(it);
     else
       it++;
   }
 }
 
-PathMap GenerateAllPossiblePaths()
-{
-  std::map<ModuleName, ModuleData> modules = GetSelectedModules();
-  std::vector<EngineerName> engineers = GetSelectedEngineers();
-
-  AssignEngineersToModules(engineers, modules);
-  RemoveUnusedEngineers(engineers, modules);
-  RemoveDeadModules(modules);
-
-  std::vector<std::vector<SystemName>> allPaths = FindAllPathCombinations(modules);
-
-  PathMap result;
-
-  for (auto const & path : allPaths)
-    result.push_back(FillModuleMap(path, modules));
-
-  return result;
-}
 
 //To find the minimum path from a point through all other points, we add 2 dummy points a, b such that:
 // a is distance 0 from the start point and inf to all others
@@ -344,16 +205,86 @@ void DoMinimumLength(std::vector<SystemNode> const &subPath, std::vector<SystemN
   }
 }
 
-void AddSubPath(std::map<SystemName, std::vector<ModuleGrade>> & pathMap, std::vector<SystemNode> & out, int priority)
+// Init engineer
+static bool InitEngineer(std::list<ModuleItem> & placedModules,
+                      std::list<ModuleItem> & modules,
+                      std::list<ModuleItem>::iterator & placedModule_it,
+                      std::set<std::string>::iterator & placedEngineer_it,
+                      std::list<ModuleItem>::iterator & module_it,
+                      std::set<std::string>::iterator & engineer_it)
 {
-  if (pathMap.size() == 0 || priority < GameData::MinPriority)
-    return;
+  if (engineer_it == module_it->engineers.end())
+  {
+    module_it++;
+    return InitModule(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
+  }
+  return true;
+}
+
+// Init module
+static bool InitModule(std::list<ModuleItem> & placedModules,
+                      std::list<ModuleItem> & modules,
+                      std::list<ModuleItem>::iterator & placedModule_it,
+                      std::set<std::string>::iterator & placedEngineer_it,
+                      std::list<ModuleItem>::iterator & module_it,
+                      std::set<std::string>::iterator & engineer_it)
+{
+  if (module_it == modules.end())
+  {
+    placedEngineer_it++;
+    return InitPlacedEngineer(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
+  }
+  engineer_it = module_it->engineers.begin();
+  return InitEngineer(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
+}
+
+// Init placedEngineer
+static bool InitPlacedEngineer(std::list<ModuleItem> & placedModules,
+                      std::list<ModuleItem> & modules,
+                      std::list<ModuleItem>::iterator & placedModule_it,
+                      std::set<std::string>::iterator & placedEngineer_it,
+                      std::list<ModuleItem>::iterator & module_it,
+                      std::set<std::string>::iterator & engineer_it)
+{
+  if (placedEngineer_it == placedModule_it->engineers.end())
+  {
+    placedModule_it++;
+    return InitPlacedModule(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
+  }
+  module_it = modules.begin();
+  return InitModule(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
+}
+
+// Init placedModule
+static bool InitPlacedModule(std::list<ModuleItem> & placedModules,
+                      std::list<ModuleItem> & modules,
+                      std::list<ModuleItem>::iterator & placedModule_it,
+                      std::set<std::string>::iterator & placedEngineer_it,
+                      std::list<ModuleItem>::iterator & module_it,
+                      std::set<std::string>::iterator & engineer_it)
+{
+  if (placedModule_it == placedModules.end())
+    return false;
+  placedEngineer_it = placedModule_it->engineers.begin();
+  return InitPlacedEngineer(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
+}
+
+static void RecursiveFindPath(SystemNode const & startSystem,
+                              std::list<ModuleItem> placedModules,
+                              std::list<ModuleItem>::iterator placedModule_it,
+                              std::set<std::string>::iterator placedEngineer_it,
+                              std::list<ModuleItem> & modules,
+                              std::list<ModuleItem>::iterator & module_it,
+                              std::set<std::string>::iterator engineer_it,
+                              std::vector<SystemNode> & currentPath,
+                              std::vector<SystemNode> & currentBest)
+{
 
   std::vector<SystemNode> subPath;
 
-  for (auto it = pathMap.begin(); it != pathMap.end();)
+  for (auto it = modules.begin(); it != modules.end();)
   {
-    if (g_GameData.engineerPriorities[GetEngineer(it->first)] == priority)
+    if (g_GameData.selectedEngineers == priority)
     {
       SystemNode node;
       node.name = it->first;
@@ -381,44 +312,102 @@ void AddSubPath(std::map<SystemName, std::vector<ModuleGrade>> & pathMap, std::v
   AddSubPath(pathMap, out, priority - 1);
 }
 
-void FindShortestPath(std::map<SystemName, std::vector<ModuleGrade>> pathMap, std::vector<SystemNode> &out)
+static void AddSystem(std::list<ModuleItem> & modules, std::string const & systemName, std::vector<SystemNode> & out)
 {
-  SystemNode startSystem;
-  startSystem.name = g_GameData.startSystem;
-  auto it = pathMap.find(g_GameData.startSystem);
-  if (it != pathMap.end())
+  SystemNode system;
+  system.name = systemName;
+
+  // Erase all modules containing the engineer that lives in systemName
+  for (auto mit = modules.begin(); mit != modules.end();)
   {
-    startSystem.modules = it->second;
-    pathMap.erase(it);
-  }
-  out.push_back(startSystem);
-
-  AddSubPath(pathMap, out, GameData::MaxPriority);
-}
-
-std::vector<SystemNode> FindShortestPath()
-{
-  PathMap paths = GenerateAllPossiblePaths();
-
-  float bestDist = FLT_MAX;
-  std::vector<SystemNode> bestPath;
-  std::vector<SystemNode> currentPath;
-
-  for (auto const & path : paths)
-  {
-    currentPath.clear();
-    FindShortestPath(path, currentPath);
-    float dist = PathDistance(currentPath);
+    bool found = false;
+    for (auto it = mit->second.engineers.begin(); it != mit->second.engineers.end(); it++)
     {
-      if (dist < bestDist)
+      if (systemName == GET_SYSTEM(*it))
       {
-        bestDist = dist;
-        bestPath = currentPath;
+        found = true;
+        break;
       }
+    }
+
+    if (found)
+    {
+      system.modules.insert(std::pair<std::string, int>(mit->first, mit->second.grade));
+      mit = modules.erase(mit);
+    }
+    else
+    {
+      mit++;
     }
   }
 
-  return bestPath;
+  out.push_back(system);
+}
+
+//static void ExtractPlacedModules(ModuleItemList & placedModules, ModuleItemList & modules, int place)
+//{
+//  for (auto mit = modules.begin(); mit != modules.end();)
+//  {
+//    auto it = g_GameData.selectedModules.find(mit->name);
+//    if (it != g_GameData.selectedModules.end())
+//    {
+//      placedModules.push_back(*mit);
+//      mit = modules.erase(mit);
+//      ExtractPlacedModules(placedModules, modules, place + 1);
+//      break;
+//    }
+//    else
+//    {
+//      mit++;
+//    }
+//  }
+//}
+
+static struct Data
+{
+  EngineerList placedEngineers;
+  EngineerList engineers;
+  ModuleItemList modules;
+  std::vector<SystemNode> currentBest;
+  std::vector<SystemNode> currentPath;
+};
+
+static void FindShortestPath(ModuleItemList & modules, std::vector<SystemNode> &out)
+{
+  // Make 2 lists:
+  // Head = all placed modules (modules must remain in this order)
+  // Tail = all others (can be sorted)
+
+  AddSystem(modules, g_GameData.startSystem, out);
+
+  ModuleItemList placedModules;
+
+  std::vector<SystemNode> currentBest;
+  std::vector<SystemNode> currentPath;
+
+  EngineerList placedEngineers = GetEngineerList(placedModules);
+  EngineerList engineers = GetEngineerList(modules);
+
+  RecursiveFindPath(out[0], placedModules, modules, currentPath, currentBest);
+}
+
+static bool FindBestRoute(std::vector<SystemNode> & out)
+{
+  bool result = true;
+  try
+  {
+    ModuleItemList modules = GetSelectedModules();
+
+    AssignEngineersToModules(modules);
+    RemoveDeadModules(modules);
+
+    FindShortestPath(modules, out);
+  }
+  catch (...)
+  {
+    result = false;
+  }
+  return result;
 }
 
 float PathDistance(std::vector<SystemNode> const & path)
@@ -426,10 +415,7 @@ float PathDistance(std::vector<SystemNode> const & path)
   float dist = 0.f;
   for (size_t i = 0; (i + 1) < path.size(); i++)
   {
-    Float3 pi = g_GameData.system[path[i].name].position;
-    Float3 pj = g_GameData.system[path[i + 1].name].position;
-
-    dist += (pi - pj).Length();
+    dist += (path[i].system.second.position - path[i + 1].system.second.position).Length();
   }
   return dist;
 }

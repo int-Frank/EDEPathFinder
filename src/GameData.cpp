@@ -183,7 +183,7 @@ bool ReadSystems(std::ifstream & ifs, SystemMap & systemMap)
     CHECK(ReadSystem(ifs, name, data));
 
     if (systemMap.find(name) != systemMap.end())
-      PUSH_ERROR_MESSAGE("WARNING: Duplicate system found: '%s'", name);
+      PUSH_ERROR_MESSAGE("WARNING: Duplicate system found: '%s'", name.c_str());
     else
       systemMap[name] = data;
 
@@ -238,7 +238,7 @@ bool ReadModules(std::ifstream & ifs, ModuleMap & moduleMap)
     CHECK(ReadModule(ifs, name, data));
 
     if (moduleMap.find(name) != moduleMap.end())
-      PUSH_ERROR_MESSAGE("WARNING: Duplicate module found: '%s'", name);
+      PUSH_ERROR_MESSAGE("WARNING: Duplicate module found: '%s'", name.c_str());
     else
       moduleMap[name] = data;
 
@@ -296,7 +296,7 @@ bool ReadEngineerModules(std::ifstream & ifs, std::map<std::string, int> & modul
     CHECK(ReadEngineerModule(ifs, name, grade));
 
     if (modules.find(name) != modules.end())
-      PUSH_ERROR_MESSAGE("WARNING: Duplicate module grade found: '%s'", name);
+      PUSH_ERROR_MESSAGE("WARNING: Duplicate module grade found: '%s'", name.c_str());
     else
       modules[name] = grade;
 
@@ -355,7 +355,7 @@ bool ReadEngineers(std::ifstream & ifs, EngineerMap & engineerMap)
     CHECK(ReadEngineer(ifs, name, data));
 
     if (engineerMap.find(name) != engineerMap.end())
-      PUSH_ERROR_MESSAGE("WARNING: Duplicate engineer found: '%s'", name);
+      PUSH_ERROR_MESSAGE("WARNING: Duplicate engineer found: '%s'", name.c_str());
     else
       engineerMap[name] = data;
 
