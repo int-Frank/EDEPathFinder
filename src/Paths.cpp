@@ -3,17 +3,21 @@
 
 #define GET_SYSTEM(engineerName) g_GameData.engineers.at(engineerName).system
 
-static struct ModuleItem
+// bool : visited
+typedef std::map<std::string, bool> EngineerList;
+typedef std::map<std::string, std::vector<ModuleNode>> EngineerModuleMap;
+
+struct ModuleItem
 {
   std::string name;
-  bool active;
+  int counter;
   int grade;
   int gradeTarget;
-  std::set<std::string> engineers;
+  int priority;
+  EngineerList engineers;
 };
 
 typedef std::list<ModuleItem> ModuleItemList;
-typedef std::set<std::string> EngineerList;
 
 static std::list<ModuleItem>::iterator Find(ModuleItemList & moduleList, std::string const & name)
 {
@@ -35,72 +39,11 @@ static ModuleItemList GetSelectedModules()
     item.grade = 0;
     item.gradeTarget = kv.second.gradeTarget;
     item.name = kv.first;
+    item.counter = 0;
     result.push_back(item);
   }
   return result;
 }
-
-//static EngineerList GetEssentialEngineers(std::list<ModuleItem> const & modules)
-//{
-//  EngineerList result;
-//
-//  for (auto const & item : modules)
-//  {
-//    if (item.engineers.size() == 1)
-//      result.insert(*item.engineers.begin());
-//  }
-//
-//  return result;
-//}
-
-static EngineerList GetEngineerList(ModuleItemList const & modules)
-{
-  EngineerList result;
-
-  for (auto const & item : modules)
-    result.insert(item.engineers.begin(), item.engineers.end());
-
-  return result;
-}
-
-// Some engineers may not be needed. For example, consider the engineers A, B and modules M, N:
-//   - Engineer A can upgrade both module M and N to grade 5.
-//   - Engineer B can upgrade module N to grade 5.
-//   - We must visit engineer A to upgrade M, but can also upgrade N while we are there, therefore
-//     engineer B ois redundant.
-//static void RemoveUnusedEngineers(std::list<ModuleItem> &modules)
-//{
-//  std::set<std::string> essentialEngineers = GetEssentialEngineers(modules);
-//  std::list<ModuleItem> modulesTemp = modules;
-//
-//  // Remove all modules containing the essential engineers. This will remove any
-//  // unwanted engineers.
-//  for (auto engineerName : essentialEngineers)
-//  {
-//    for (auto it = modulesTemp.begin(); it != modulesTemp.end();)
-//    {
-//      if (it->engineers.find(engineerName) != it->engineers.end())
-//        it = modulesTemp.erase(it);
-//      else
-//        it++;
-//    }
-//  }
-//  
-//  std::set<std::string> remainingEngineers = GetEngineerList(modulesTemp);
-//  remainingEngineers.insert(essentialEngineers.begin(), essentialEngineers.end());
-//
-//  // Remove any engineers from modules that are not in the remaining engineers list
-//  for (auto & item : modules)
-//  {
-//    for (auto it = item.engineers.begin(); it != item.engineers.end();)
-//    {
-//      if (remainingEngineers.find(*it) == remainingEngineers.end())
-//        it = item.engineers.erase(it);
-//      else
-//        it++;
-//    }
-//  }
-//}
 
 // Find all the engineers who can upgrade each module to the required grade, or the
 // engineer(s) who can upgrade the module closest to the required grade.
@@ -122,21 +65,24 @@ static void AssignEngineersToModules(ModuleItemList & modules)
           it->grade = it->gradeTarget;
         }
 
-        it->engineers.insert(engineerName);
+        it->engineers.insert(std::pair<std::string, bool>(engineerName, false));
       }
       else if (kvmg.second > it->grade)
       {
         it->engineers.clear();
-        it->engineers.insert(engineerName);
+        it->engineers.insert(std::pair<std::string, bool>(engineerName, false));
         it->grade = kvmg.second;
       }
       else if (kvmg.second == it->grade)
       {
-        it->engineers.insert(engineerName);
+        it->engineers.insert(std::pair<std::string, bool>(engineerName, false));
       }
     }
   }
+}
 
+static void SortByEngineerCount(ModuleItemList & modules)
+{
   modules.sort([](const ModuleItem & a, const ModuleItem & b)
     {
       return a.engineers.size() < b.engineers.size();
@@ -154,19 +100,18 @@ static void RemoveDeadModules(std::list<ModuleItem> & modules)
   }
 }
 
-
 //To find the minimum path from a point through all other points, we add 2 dummy points a, b such that:
 // a is distance 0 from the start point and inf to all others
 // b distance 0 to everything
-void DoMinimumLength(std::vector<SystemNode> const &subPath, std::vector<SystemNode> & out)
+void SortToMinimumDistance(std::vector<SystemNode> & systems)
 {
-  Matrix<float> distanceMatrix(subPath.size() + 2, subPath.size() + 2, 0.0);
-  for (size_t i = 0; i < subPath.size(); i++)
+  Matrix<float> distanceMatrix(systems.size() + 2, systems.size() + 2, 0.0);
+  for (size_t i = 0; i < systems.size(); i++)
   {
-    Float3 pi = g_GameData.system[subPath[i].name].position;
-    for (size_t j = i; j < subPath.size(); j++)
+    Float3 pi = g_GameData.systems.at(systems[i].name).position;
+    for (size_t j = i; j < systems.size(); j++)
     {
-      Float3 pj = g_GameData.system[subPath[j].name].position;
+      Float3 pj = g_GameData.systems.at(systems[j].name).position;
 
       float d = (pi - pj).Length();
       distanceMatrix(i + 2, j + 2) = d;
@@ -174,13 +119,13 @@ void DoMinimumLength(std::vector<SystemNode> const &subPath, std::vector<SystemN
     }
   }
 
-  for (size_t i = 0; i < subPath.size() + 2; i++)
+  for (size_t i = 0; i < systems.size() + 2; i++)
   {
     distanceMatrix(1, i) = std::numeric_limits<float>::infinity();
     distanceMatrix(i, 1) = std::numeric_limits<float>::infinity();
   }
 
-  for (size_t i = 0; i < subPath.size() + 2; i++)
+  for (size_t i = 0; i < systems.size() + 2; i++)
   {
     distanceMatrix(0, i) = 0.0f;
     distanceMatrix(i, 0) = 0.0f;
@@ -194,6 +139,10 @@ void DoMinimumLength(std::vector<SystemNode> const &subPath, std::vector<SystemN
   solver.solve();
 
   auto it = solver.getTour().end();
+  std::vector<SystemNode> systemsOld = systems;
+  systems.clear();
+  systems.push_back(systemsOld[0]);
+
   for (size_t i = 0; i < solver.getTour().size(); i++)
   {
     it--;
@@ -201,118 +150,132 @@ void DoMinimumLength(std::vector<SystemNode> const &subPath, std::vector<SystemN
     if (*it < 3)
       continue;
 
-    out.push_back(subPath[*it - 2]);
+    systems.push_back(systemsOld[*it - 2]);
   }
 }
 
-// Init engineer
-static bool InitEngineer(std::list<ModuleItem> & placedModules,
-                      std::list<ModuleItem> & modules,
-                      std::list<ModuleItem>::iterator & placedModule_it,
-                      std::set<std::string>::iterator & placedEngineer_it,
-                      std::list<ModuleItem>::iterator & module_it,
-                      std::set<std::string>::iterator & engineer_it)
+static bool InitModule(ModuleItemList & modules,
+                       ModuleItemList::iterator & module_it,
+                       EngineerList::iterator & engineer_it);
+
+static bool InitEngineer(ModuleItemList & modules,
+                         ModuleItemList::iterator & module_it,
+                         EngineerList::iterator & engineer_it)
 {
   if (engineer_it == module_it->engineers.end())
   {
     module_it++;
-    return InitModule(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
+    return InitModule(modules, module_it, engineer_it);
   }
+
+  if (engineer_it->second) // If this engineer has already been visited, move to the next
+  {
+    engineer_it++;
+    return InitEngineer(modules, module_it, engineer_it);
+  }
+
   return true;
 }
 
-// Init module
-static bool InitModule(std::list<ModuleItem> & placedModules,
-                      std::list<ModuleItem> & modules,
-                      std::list<ModuleItem>::iterator & placedModule_it,
-                      std::set<std::string>::iterator & placedEngineer_it,
-                      std::list<ModuleItem>::iterator & module_it,
-                      std::set<std::string>::iterator & engineer_it)
+static bool InitModule(ModuleItemList & modules,
+                       ModuleItemList::iterator & module_it,
+                       EngineerList::iterator & engineer_it)
 {
   if (module_it == modules.end())
-  {
-    placedEngineer_it++;
-    return InitPlacedEngineer(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
-  }
-  engineer_it = module_it->engineers.begin();
-  return InitEngineer(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
-}
-
-// Init placedEngineer
-static bool InitPlacedEngineer(std::list<ModuleItem> & placedModules,
-                      std::list<ModuleItem> & modules,
-                      std::list<ModuleItem>::iterator & placedModule_it,
-                      std::set<std::string>::iterator & placedEngineer_it,
-                      std::list<ModuleItem>::iterator & module_it,
-                      std::set<std::string>::iterator & engineer_it)
-{
-  if (placedEngineer_it == placedModule_it->engineers.end())
-  {
-    placedModule_it++;
-    return InitPlacedModule(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
-  }
-  module_it = modules.begin();
-  return InitModule(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
-}
-
-// Init placedModule
-static bool InitPlacedModule(std::list<ModuleItem> & placedModules,
-                      std::list<ModuleItem> & modules,
-                      std::list<ModuleItem>::iterator & placedModule_it,
-                      std::set<std::string>::iterator & placedEngineer_it,
-                      std::list<ModuleItem>::iterator & module_it,
-                      std::set<std::string>::iterator & engineer_it)
-{
-  if (placedModule_it == placedModules.end())
     return false;
-  placedEngineer_it = placedModule_it->engineers.begin();
-  return InitPlacedEngineer(placedModules, modules, placedModule_it, placedEngineer_it, module_it, engineer_it);
+
+  if (module_it->counter != 0)
+  {
+    module_it++;
+    return InitModule(modules, module_it, engineer_it);
+  }
+
+  engineer_it = module_it->engineers.begin();
+  return InitEngineer(modules, module_it, engineer_it);
 }
 
-static void RecursiveFindPath(SystemNode const & startSystem,
-                              std::list<ModuleItem> placedModules,
-                              std::list<ModuleItem>::iterator placedModule_it,
-                              std::set<std::string>::iterator placedEngineer_it,
-                              std::list<ModuleItem> & modules,
-                              std::list<ModuleItem>::iterator & module_it,
-                              std::set<std::string>::iterator engineer_it,
-                              std::vector<SystemNode> & currentPath,
+static void ProcessBuild(std::vector<SystemNode> & currentBuild,
+                         std::vector<SystemNode> & currentBest)
+{
+  SortToMinimumDistance(currentBuild);
+  if (PathDistance(currentBuild) < PathDistance(currentBuild))
+    currentBest = currentBuild;
+}
+
+static void VisitEngineer(ModuleItemList & modules, 
+                          std::string const & engineerName)
+{
+  for (auto & module : modules)
+  {
+    for (auto & engineer : module.engineers)
+    {
+      if (engineer.first == engineerName)
+      {
+        engineer.second = true;
+        module.counter++;
+        break;
+      }
+    }
+  }
+}
+
+static void UnvisitEngineer(ModuleItemList & modules, 
+                            std::string const & engineerName)
+{
+  for (auto & module : modules)
+  {
+    for (auto & engineer : module.engineers)
+    {
+      if (engineer.first == engineerName)
+      {
+        engineer.second = false;
+        module.counter--;
+        break;
+      }
+    }
+  }
+}
+
+static void RecursiveFindPath(EngineerModuleMap const & engineers,
+                              ModuleItemList & modules,
+                              ModuleItemList::iterator currentModule,
+                              EngineerList::iterator currentEngineer,
+                              std::vector<SystemNode> & currentBuild,
                               std::vector<SystemNode> & currentBest)
 {
-
-  std::vector<SystemNode> subPath;
-
-  for (auto it = modules.begin(); it != modules.end();)
+  if (!InitEngineer(modules, currentModule, currentEngineer))
   {
-    if (g_GameData.selectedEngineers == priority)
-    {
-      SystemNode node;
-      node.name = it->first;
-      node.modules = it->second;
-      subPath.push_back(node);
-      it = pathMap.erase(it);
-    }
-    else
-    {
-      it++;
-    }
+    ProcessBuild(currentBuild, currentBest);
+    return;
+  }
+  
+  SystemNode node;
+  node.name = GET_SYSTEM(currentEngineer->first);
+  node.modules = engineers.at(currentEngineer->first);
+  currentBuild.push_back(node);
+
+  VisitEngineer(modules, currentEngineer->first);
+
+  ModuleItemList::iterator nextModule = currentModule;
+  nextModule++;
+
+  if (!InitModule(modules, currentModule, currentEngineer))
+  {
+    ProcessBuild(currentBuild, currentBest);
+  }
+  else
+  {
+    EngineerList::iterator nextEngineer = nextModule->engineers.begin();
+    RecursiveFindPath(engineers, modules, nextModule, nextEngineer, currentBuild, currentBest);
   }
 
-  if (subPath.size() == 1)
-  {
-    out.push_back(subPath[0]);
-  }
-  else if (subPath.size() > 1)
-  {
-    subPath.push_back(subPath[0]);
-    subPath[0] = out.back();
-    DoMinimumLength(subPath, out);
-  }
+  currentBuild.pop_back();
+  UnvisitEngineer(modules, currentEngineer->first);
 
-  AddSubPath(pathMap, out, priority - 1);
+  RecursiveFindPath(engineers, modules, currentModule, ++currentEngineer, currentBuild, currentBest);
 }
 
-static void AddSystem(std::list<ModuleItem> & modules, std::string const & systemName, std::vector<SystemNode> & out)
+static void AddSystem(ModuleItemList & modules, std::string const & systemName, std::vector<SystemNode> & out)
 {
   SystemNode system;
   system.name = systemName;
@@ -321,9 +284,9 @@ static void AddSystem(std::list<ModuleItem> & modules, std::string const & syste
   for (auto mit = modules.begin(); mit != modules.end();)
   {
     bool found = false;
-    for (auto it = mit->second.engineers.begin(); it != mit->second.engineers.end(); it++)
+    for (auto it = mit->engineers.begin(); it != mit->engineers.end(); it++)
     {
-      if (systemName == GET_SYSTEM(*it))
+      if (systemName == GET_SYSTEM(it->first))
       {
         found = true;
         break;
@@ -332,7 +295,7 @@ static void AddSystem(std::list<ModuleItem> & modules, std::string const & syste
 
     if (found)
     {
-      system.modules.insert(std::pair<std::string, int>(mit->first, mit->second.grade));
+      system.modules.push_back({mit->name, mit->grade});
       mit = modules.erase(mit);
     }
     else
@@ -344,51 +307,59 @@ static void AddSystem(std::list<ModuleItem> & modules, std::string const & syste
   out.push_back(system);
 }
 
-//static void ExtractPlacedModules(ModuleItemList & placedModules, ModuleItemList & modules, int place)
-//{
-//  for (auto mit = modules.begin(); mit != modules.end();)
-//  {
-//    auto it = g_GameData.selectedModules.find(mit->name);
-//    if (it != g_GameData.selectedModules.end())
-//    {
-//      placedModules.push_back(*mit);
-//      mit = modules.erase(mit);
-//      ExtractPlacedModules(placedModules, modules, place + 1);
-//      break;
-//    }
-//    else
-//    {
-//      mit++;
-//    }
-//  }
-//}
-
-static struct Data
+static void FindShortestPath(EngineerModuleMap const & engineers, ModuleItemList & modules, std::vector<SystemNode> &out)
 {
-  EngineerList placedEngineers;
-  EngineerList engineers;
-  ModuleItemList modules;
-  std::vector<SystemNode> currentBest;
-  std::vector<SystemNode> currentPath;
-};
+  if (modules.size() == 0)
+    return;
 
-static void FindShortestPath(ModuleItemList & modules, std::vector<SystemNode> &out)
+  SortByEngineerCount(modules);
+
+  std::vector<SystemNode> currentBuild;
+  currentBuild.push_back(out.at(0));
+
+  RecursiveFindPath(engineers, modules, modules.begin(), modules.begin()->engineers.begin(), currentBuild, out);
+}
+
+static std::set<int> ExtractPriorities(ModuleItemList const & modules)
 {
-  // Make 2 lists:
-  // Head = all placed modules (modules must remain in this order)
-  // Tail = all others (can be sorted)
+  std::set<int> result;
+  for (auto const & m : modules)
+    result.insert(m.priority);
+  return result;
+}
 
-  AddSystem(modules, g_GameData.startSystem, out);
+static ModuleItemList ExtractModules(ModuleItemList & modules, int priority)
+{
+  ModuleItemList result;
+  for (auto it = modules.begin(); it != modules.end();)
+  {
+    if (it->priority == priority)
+    {
+      result.push_back(*it);
+      it = modules.erase(it);
+    }
+    else
+    {
+      it++;
+    }
+  }
+  return result;
+}
 
-  ModuleItemList placedModules;
-
-  std::vector<SystemNode> currentBest;
-  std::vector<SystemNode> currentPath;
-
-  EngineerList placedEngineers = GetEngineerList(placedModules);
-  EngineerList engineers = GetEngineerList(modules);
-
-  RecursiveFindPath(out[0], placedModules, modules, currentPath, currentBest);
+static EngineerModuleMap GetEngineerModuleMap(ModuleItemList const & modules)
+{
+  EngineerModuleMap result;
+  for (auto const & module : modules)
+  {
+    for (auto const & kv: module.engineers)
+    {
+      ModuleNode node;
+      node.moduleName = module.name;
+      node.grade = module.grade;
+      result[kv.first].push_back(node);
+    }
+  }
+  return result;
 }
 
 static bool FindBestRoute(std::vector<SystemNode> & out)
@@ -400,8 +371,19 @@ static bool FindBestRoute(std::vector<SystemNode> & out)
 
     AssignEngineersToModules(modules);
     RemoveDeadModules(modules);
+    AddSystem(modules, g_GameData.startSystem, out);
+    EngineerModuleMap engineers = GetEngineerModuleMap(modules);
 
-    FindShortestPath(modules, out);
+    std::set<int> priorities = ExtractPriorities(modules);
+
+    for (int priority : priorities)
+    {
+      ModuleItemList moduleSet = ExtractModules(modules, priority);
+      std::vector<SystemNode> path;
+      path.push_back(path.back());
+      FindShortestPath(engineers, modules, path);
+      out.insert(out.end(), ++path.begin(), path.end());
+    }
   }
   catch (...)
   {
@@ -415,7 +397,10 @@ float PathDistance(std::vector<SystemNode> const & path)
   float dist = 0.f;
   for (size_t i = 0; (i + 1) < path.size(); i++)
   {
-    dist += (path[i].system.second.position - path[i + 1].system.second.position).Length();
+    Float3 s0 = g_GameData.systems.at(path[i].name).position;
+    Float3 s1 = g_GameData.systems.at(path[i + 1].name).position;
+
+    dist += (s1 - s0).Length();
   }
   return dist;
 }

@@ -15,12 +15,13 @@
 #include "GameData.h"
 #include "GUI.h"
 #include "Path.h"
-#include "SimpleJsonParser.h"
 
 #include <windows.h>
 #include <winuser.h>
 
 #pragma comment(lib, "d3d11.lib")
+
+#define DATA_FILE_PATH L"./EDEPaths.json"
 
 SDL_Window * g_pWindow = nullptr;
 
@@ -49,6 +50,38 @@ void Alert(char const * format, ...)
 
   MessageBoxA(NULL, buffer, "Message", MB_OK | MB_ICONERROR);
 }
+
+struct GUIData
+{
+  int systemsCount;
+  char ** ppSystems;
+};
+
+bool InitGuiData(GUIData & data)
+{
+  data.ppSystems = new char * [g_GameData.systems.size()];
+  data.systemsCount = (int)g_GameData.systems.size();
+
+  size_t i = 0;
+  for (auto const & kv : g_GameData.systems)
+  {
+    data.ppSystems[i] = new char[kv.first.size() + 1]{};
+    sprintf(data.ppSystems[i], "%s", kv.first.c_str());
+    i++;
+  }
+
+  return true;
+}
+
+void DestroyGUIData(GUIData & data)
+{
+  for (int i = 0; i < data.systemsCount; i++)
+    delete[] data.ppSystems[i];
+  delete[] data.ppSystems;
+  data.ppSystems = nullptr;
+  data.systemsCount = 0;
+}
+
 
 bool Init()
 {
@@ -90,7 +123,7 @@ bool Init()
   ImGui_ImplSDL2_InitForD3D(g_pWindow);
   ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
-  return true;
+  return g_GameData.Load(DATA_FILE_PATH);
 }
 
 void ShutDown()
@@ -104,298 +137,289 @@ void ShutDown()
   SDL_Quit();
 }
 
-void DoEngineersWindow()
+//void DoEngineersWindow()
+//{
+//  static MouseDownButton engineerButtons[EngineerCOUNT] = 
+//  {
+//#undef ITEM2
+//#undef ITEM3
+//#define ITEM2(a, c) MouseDownButton(ToString(e ## a), ImVec2(200, 40), Default::clrMajor, Default::clrMinor),
+//#define ITEM3(a, c, str) MouseDownButton(ToString(e ## a), ImVec2(200, 40), Default::clrMajor, Default::clrMinor),
+//    UNROLL_ENGINEERS
+//  };
+//
+//  static bool isInit = false;
+//  static RadioButtons regions;
+//  static char const * engineerPriorities[] ={"1", "2", "3", "4", "5", "6", "7", "8", "9"}; //Ensure this aligns with GameData::[Min][Max]ModuleRank
+//
+//  if (!isInit) // Bit hacky...
+//  {
+//    for (uint32_t i = 0; i < RegionCOUNT; i++)
+//      regions.AddButton(MouseDownButton(ToString(Region(i)), ImVec2(120, 25), Default::clrMajor, Default::clrMinor));
+//    isInit = true;
+//  }
+//
+//  ImGui::SetNextWindowPos(ImVec2(330, 5));
+//  ImGui::SetNextWindowSize(ImVec2(542, 635));
+//  ImGui::Begin("Engineers", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
+//  ImGui::Text("Select Engineers");
+//  ImGui::Spacing();
+//  regions.Render();
+//
+//  Region reg = Region(regions.ActiveButton());
+//
+//  if (regions.WasPressed() != -1)
+//  {
+//    for (uint32_t i = 0; i < EngineerCOUNT; i++)
+//      engineerButtons[i].SetState(false);
+//  }
+//
+//  uint32_t const elePerRow = 2;
+//  ImGui::Separator();
+//
+//  uint32_t placedEngineers = 0;
+//  for (uint32_t e = 0; e < EngineerCOUNT; e++)
+//  {
+//    if (GetRegion(GetSystem(EngineerName(e))) != reg)
+//      continue;
+//
+//    if ((placedEngineers) % elePerRow != 0)
+//      ImGui::SameLine();
+//
+//    placedEngineers++;
+//
+//    ImGui::BeginGroup();
+//    engineerButtons[e].Render();
+//
+//    if (ImGui::IsItemHovered())
+//    {
+//      ImGui::BeginTooltip();
+//      ImGui::TextColored(ImVec4(Default::textHighlight2), "System: %s\t", ToString(GetSystem(EngineerName(e))));
+//
+//      float dist = (g_GameData.system[GetSystem(EngineerName(e))].position - g_GameData.system[g_GameData.startSystem].position).Length();
+//      ImGui::TextColored(ImVec4(Default::textHighlight2), "%0.2fly from %s\t", dist, ToString(g_GameData.startSystem));
+//
+//      for (int g = 5; g > 0; g--)
+//      {
+//        for (uint32_t t = 0; t < ModuleCOUNT; t++)
+//        {
+//          if (g_GameData.engineer[e].moduleGrade[t] != g)
+//            continue;
+//
+//          if (g == 5)
+//            ImGui::TextColored(ImVec4(Default::textHighlight1), "G%d: %s\t", g, ToString(ModuleName(t)));
+//          else
+//            ImGui::Text("G%d: %s\t", g, ToString(ModuleName(t)));
+//        }
+//      }
+//      ImGui::EndTooltip();
+//    }
+//
+//    ImGui::SameLine();
+//    ImGui::BeginGroup();
+//
+//    ImGui::PushID(1);
+//    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(Default::clrMinor));
+//    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(Default::clrMinor));
+//    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(Default::clrMinor));
+//    ImGui::Button(engineerPriorities[g_GameData.engineerPriorities[e] - 1], ImVec2(25, 40));
+//
+//    if (ImGui::IsItemHovered())
+//      ImGui::SetTooltip("Priority value. Engineers with higher\npriority values will be visited first.");
+//
+//    ImGui::PopStyleColor(3);
+//    ImGui::PopID();
+//    ImGui::EndGroup();
+//    ImGui::SameLine();
+//
+//    static MouseDownButton bUp("^##EngPriUp", ImVec2(17, 17), Default::clrMinor, Default::clrMinor);
+//    static MouseDownButton bDown("v##EngPriDown", ImVec2(17, 17), Default::clrMinor, Default::clrMinor);
+//
+//    ImGui::BeginGroup();
+//
+//    bUp.Render();
+//    bDown.Render();
+//
+//    if (bUp.WasPressed() && g_GameData.engineerPriorities[e] < GameData::MaxPriority)
+//      g_GameData.engineerPriorities[e]++;
+//    if (bDown.WasPressed() && g_GameData.engineerPriorities[e] > GameData::MinPriority)
+//      g_GameData.engineerPriorities[e]--;
+//
+//    ImGui::EndGroup();
+//    ImGui::EndGroup();
+//  }
+//
+//  ImGui::SetCursorPos(ImVec2(154, 579));
+//  if (ImGui::Button("Select All##Engineers", ImVec2(120, 25)))
+//  {
+//    for (uint32_t e = 0; e < EngineerCOUNT; e++)
+//    {
+//      if (GetRegion(GetSystem(EngineerName(e))) == reg)
+//        engineerButtons[e].SetState(true);
+//    }
+//  }
+//  ImGui::SameLine();
+//  if (ImGui::Button("Clear##Engineers", ImVec2(120, 25)))
+//  {
+//    for (uint32_t e = 0; e < EngineerCOUNT; e++)
+//      engineerButtons[e].SetState(false);
+//  }
+//  ImGui::SameLine();
+//  if (ImGui::Button("Reset Priorities", ImVec2(120, 25)))
+//  {
+//    for (uint32_t e = 0; e < EngineerCOUNT; e++)
+//    {
+//      if (GetRegion(GetSystem(EngineerName(e))) == reg)
+//        g_GameData.engineerPriorities[e] = GameData::MinPriority;
+//    }
+//  }
+//
+//  g_GameData.selectedEngineers = 0;
+//  for (uint32_t e = 0; e < EngineerCOUNT; e++)
+//  {
+//    if (engineerButtons[e].IsOn())
+//      g_GameData.selectedEngineers |= (1ull << e);
+//    else
+//      g_GameData.selectedEngineers &= ~(1ull << e);
+//  }
+//
+//  ImGui::End();
+//}
+//
+//void FindMaxModulesGrades(int maxGrades[ModuleCOUNT])
+//{
+//  for (uint32_t e = 0; e < EngineerCOUNT; e++)
+//  {
+//    if ((g_GameData.selectedEngineers & (1ull << e)) == 0)
+//      continue;
+//
+//    for (uint32_t m = 0; m < ModuleCOUNT; m++)
+//    {
+//      if ((int)g_GameData.engineer[e].moduleGrade[m] > maxGrades[m])
+//        maxGrades[m] = g_GameData.engineer[e].moduleGrade[m];
+//    }
+//  }
+//}
+//
+//void DoModuleWindow()
+//{
+//  static ImVec2 const buttonSize(247, 30);
+//  static RadioButtons moduleClassButtons;
+//  static MouseDownButton moduleButtons[ModuleCOUNT] =
+//  {
+//#undef ITEM2
+//#undef ITEM3
+//#define ITEM2(a, c) MouseDownButton(ToString(m ## a), buttonSize, Default::clrMajor, Default::clrMinor),
+//#define ITEM3(a, c, str) MouseDownButton(ToString(m ## a), buttonSize, Default::clrMajor, Default::clrMinor),
+//     UNROLL_MODULES
+//  };
+//
+//  if (moduleClassButtons.Size() == 0)
+//  {
+//    for (uint32_t i = 0; i < ModuleClassCOUNT; i++)
+//      moduleClassButtons.AddButton(MouseDownButton(ToString(ModuleClass(i)), ImVec2(70, 25), Default::clrMajor, Default::clrMinor));
+//  }
+//
+//  ImGui::SetNextWindowPos(ImVec2(5,70));
+//  ImGui::SetNextWindowSize(ImVec2(320, 570));
+//  ImGui::Begin("Modules", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
+//  ImGui::Text("Select Modules");
+//  ImGui::Spacing();
+//  moduleClassButtons.Render();
+//  ImGui::Separator();
+//
+//  int maxGrades[ModuleCOUNT] = {};
+//  FindMaxModulesGrades(maxGrades);
+//
+//  ModuleClass currentClass = ModuleClass(moduleClassButtons.ActiveButton());
+//
+//  char buf[32];
+//  for (uint32_t m = 0; m < ModuleCOUNT; m++)
+//  {
+//    if (GetModuleClass(ModuleName(m)) != currentClass)
+//      continue;
+//
+//    if (maxGrades[m] < 1)
+//    {
+//      ImGui::PushID(1);
+//      ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(Default::clrLightGrey));
+//      ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(Default::clrLightGrey));
+//      ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(Default::clrLightGrey));
+//      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(Default::clrMinor));
+//
+//      ImGui::Button(ToString(ModuleName(m)), buttonSize);
+//
+//      ImGui::PopStyleColor(4);
+//      ImGui::PopID();
+//      continue;
+//    }
+//
+//    moduleButtons[m].Render();
+//
+//    if (!moduleButtons[m].IsOn())
+//      continue;
+//
+//    ImGui::SameLine();
+//
+//    ImGui::PushID(1);
+//
+//    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(Default::clrMajor));
+//    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(Default::clrMajor));
+//    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(Default::clrMinor));
+//    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(Default::clrMinor));
+//    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(Default::clrMinor));
+//    ImGui::SetNextItemWidth(50.f);
+//    sprintf(buf, "##modLevel%u", m);
+//
+//    if (g_GameData.moduleUpgradeLevel[m] < 1)
+//      g_GameData.moduleUpgradeLevel[m] = 1;
+//    if (g_GameData.moduleUpgradeLevel[m] > maxGrades[m])
+//      g_GameData.moduleUpgradeLevel[m] = maxGrades[m];
+//
+//    ImGui::SliderInt(buf, &g_GameData.moduleUpgradeLevel[m], 1, maxGrades[m]);
+//
+//    // Need this as ImGui::SliderInt is bugged for ranges [x, x]
+//    if (g_GameData.moduleUpgradeLevel[m] < 1)
+//      g_GameData.moduleUpgradeLevel[m] = 1;
+//
+//    ImGui::PopStyleColor(5);
+//    ImGui::PopID();
+//  }
+//
+//  ImGui::SetCursorPos(ImVec2(60, 515));
+//  if (ImGui::Button("Clear##ModuleClass", ImVec2(120, 25)))
+//  {
+//    for (uint32_t m = 0; m < ModuleCOUNT; m++)
+//    {
+//      if (GetModuleClass(ModuleName(m)) != currentClass)
+//        continue;
+//
+//      moduleButtons[m].SetState(false);
+//    }
+//  }
+//  ImGui::SameLine();
+//
+//  if (ImGui::Button("Clear All##ModuleClass", ImVec2(120, 25)))
+//  {
+//    for (uint32_t i = 0; i < ModuleCOUNT; i++)
+//      moduleButtons[i].SetState(false);
+//  }
+//
+//  g_GameData.selectedModules = 0;
+//  for (uint32_t i = 0; i < ModuleCOUNT; i++)
+//  {
+//    if (moduleButtons[i].IsOn())
+//      g_GameData.selectedModules |= (1ull << i);
+//    else
+//      g_GameData.selectedModules &= ~(1ull << i);
+//  }
+//
+//  ImGui::End();
+//}
+
+void DoSystemWindow(GUIData &guiData)
 {
-  static MouseDownButton engineerButtons[EngineerCOUNT] = 
-  {
-#undef ITEM2
-#undef ITEM3
-#define ITEM2(a, c) MouseDownButton(ToString(e ## a), ImVec2(200, 40), Default::clrMajor, Default::clrMinor),
-#define ITEM3(a, c, str) MouseDownButton(ToString(e ## a), ImVec2(200, 40), Default::clrMajor, Default::clrMinor),
-    UNROLL_ENGINEERS
-  };
-
-  static bool isInit = false;
-  static RadioButtons regions;
-  static char const * engineerPriorities[] ={"1", "2", "3", "4", "5", "6", "7", "8", "9"}; //Ensure this aligns with GameData::[Min][Max]ModuleRank
-
-  if (!isInit) // Bit hacky...
-  {
-    for (uint32_t i = 0; i < RegionCOUNT; i++)
-      regions.AddButton(MouseDownButton(ToString(Region(i)), ImVec2(120, 25), Default::clrMajor, Default::clrMinor));
-    isInit = true;
-  }
-
-  ImGui::SetNextWindowPos(ImVec2(330, 5));
-  ImGui::SetNextWindowSize(ImVec2(542, 635));
-  ImGui::Begin("Engineers", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
-  ImGui::Text("Select Engineers");
-  ImGui::Spacing();
-  regions.Render();
-
-  Region reg = Region(regions.ActiveButton());
-
-  if (regions.WasPressed() != -1)
-  {
-    for (uint32_t i = 0; i < EngineerCOUNT; i++)
-      engineerButtons[i].SetState(false);
-  }
-
-  uint32_t const elePerRow = 2;
-  ImGui::Separator();
-
-  uint32_t placedEngineers = 0;
-  for (uint32_t e = 0; e < EngineerCOUNT; e++)
-  {
-    if (GetRegion(GetSystem(EngineerName(e))) != reg)
-      continue;
-
-    if ((placedEngineers) % elePerRow != 0)
-      ImGui::SameLine();
-
-    placedEngineers++;
-
-    ImGui::BeginGroup();
-    engineerButtons[e].Render();
-
-    if (ImGui::IsItemHovered())
-    {
-      ImGui::BeginTooltip();
-      ImGui::TextColored(ImVec4(Default::textHighlight2), "System: %s\t", ToString(GetSystem(EngineerName(e))));
-
-      float dist = (g_GameData.system[GetSystem(EngineerName(e))].position - g_GameData.system[g_GameData.startSystem].position).Length();
-      ImGui::TextColored(ImVec4(Default::textHighlight2), "%0.2fly from %s\t", dist, ToString(g_GameData.startSystem));
-
-      for (int g = 5; g > 0; g--)
-      {
-        for (uint32_t t = 0; t < ModuleCOUNT; t++)
-        {
-          if (g_GameData.engineer[e].moduleGrade[t] != g)
-            continue;
-
-          if (g == 5)
-            ImGui::TextColored(ImVec4(Default::textHighlight1), "G%d: %s\t", g, ToString(ModuleName(t)));
-          else
-            ImGui::Text("G%d: %s\t", g, ToString(ModuleName(t)));
-        }
-      }
-      ImGui::EndTooltip();
-    }
-
-    ImGui::SameLine();
-    ImGui::BeginGroup();
-
-    ImGui::PushID(1);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(Default::clrMinor));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(Default::clrMinor));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(Default::clrMinor));
-    ImGui::Button(engineerPriorities[g_GameData.engineerPriorities[e] - 1], ImVec2(25, 40));
-
-    if (ImGui::IsItemHovered())
-      ImGui::SetTooltip("Priority value. Engineers with higher\npriority values will be visited first.");
-
-    ImGui::PopStyleColor(3);
-    ImGui::PopID();
-    ImGui::EndGroup();
-    ImGui::SameLine();
-
-    static MouseDownButton bUp("^##EngPriUp", ImVec2(17, 17), Default::clrMinor, Default::clrMinor);
-    static MouseDownButton bDown("v##EngPriDown", ImVec2(17, 17), Default::clrMinor, Default::clrMinor);
-
-    ImGui::BeginGroup();
-
-    bUp.Render();
-    bDown.Render();
-
-    if (bUp.WasPressed() && g_GameData.engineerPriorities[e] < GameData::MaxPriority)
-      g_GameData.engineerPriorities[e]++;
-    if (bDown.WasPressed() && g_GameData.engineerPriorities[e] > GameData::MinPriority)
-      g_GameData.engineerPriorities[e]--;
-
-    ImGui::EndGroup();
-    ImGui::EndGroup();
-  }
-
-  ImGui::SetCursorPos(ImVec2(154, 579));
-  if (ImGui::Button("Select All##Engineers", ImVec2(120, 25)))
-  {
-    for (uint32_t e = 0; e < EngineerCOUNT; e++)
-    {
-      if (GetRegion(GetSystem(EngineerName(e))) == reg)
-        engineerButtons[e].SetState(true);
-    }
-  }
-  ImGui::SameLine();
-  if (ImGui::Button("Clear##Engineers", ImVec2(120, 25)))
-  {
-    for (uint32_t e = 0; e < EngineerCOUNT; e++)
-      engineerButtons[e].SetState(false);
-  }
-  ImGui::SameLine();
-  if (ImGui::Button("Reset Priorities", ImVec2(120, 25)))
-  {
-    for (uint32_t e = 0; e < EngineerCOUNT; e++)
-    {
-      if (GetRegion(GetSystem(EngineerName(e))) == reg)
-        g_GameData.engineerPriorities[e] = GameData::MinPriority;
-    }
-  }
-
-  g_GameData.selectedEngineers = 0;
-  for (uint32_t e = 0; e < EngineerCOUNT; e++)
-  {
-    if (engineerButtons[e].IsOn())
-      g_GameData.selectedEngineers |= (1ull << e);
-    else
-      g_GameData.selectedEngineers &= ~(1ull << e);
-  }
-
-  ImGui::End();
-}
-
-void FindMaxModulesGrades(int maxGrades[ModuleCOUNT])
-{
-  for (uint32_t e = 0; e < EngineerCOUNT; e++)
-  {
-    if ((g_GameData.selectedEngineers & (1ull << e)) == 0)
-      continue;
-
-    for (uint32_t m = 0; m < ModuleCOUNT; m++)
-    {
-      if ((int)g_GameData.engineer[e].moduleGrade[m] > maxGrades[m])
-        maxGrades[m] = g_GameData.engineer[e].moduleGrade[m];
-    }
-  }
-}
-
-void DoModuleWindow()
-{
-  static ImVec2 const buttonSize(247, 30);
-  static RadioButtons moduleClassButtons;
-  static MouseDownButton moduleButtons[ModuleCOUNT] =
-  {
-#undef ITEM2
-#undef ITEM3
-#define ITEM2(a, c) MouseDownButton(ToString(m ## a), buttonSize, Default::clrMajor, Default::clrMinor),
-#define ITEM3(a, c, str) MouseDownButton(ToString(m ## a), buttonSize, Default::clrMajor, Default::clrMinor),
-     UNROLL_MODULES
-  };
-
-  if (moduleClassButtons.Size() == 0)
-  {
-    for (uint32_t i = 0; i < ModuleClassCOUNT; i++)
-      moduleClassButtons.AddButton(MouseDownButton(ToString(ModuleClass(i)), ImVec2(70, 25), Default::clrMajor, Default::clrMinor));
-  }
-
-  ImGui::SetNextWindowPos(ImVec2(5,70));
-  ImGui::SetNextWindowSize(ImVec2(320, 570));
-  ImGui::Begin("Modules", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
-  ImGui::Text("Select Modules");
-  ImGui::Spacing();
-  moduleClassButtons.Render();
-  ImGui::Separator();
-
-  int maxGrades[ModuleCOUNT] = {};
-  FindMaxModulesGrades(maxGrades);
-
-  ModuleClass currentClass = ModuleClass(moduleClassButtons.ActiveButton());
-
-  char buf[32];
-  for (uint32_t m = 0; m < ModuleCOUNT; m++)
-  {
-    if (GetModuleClass(ModuleName(m)) != currentClass)
-      continue;
-
-    if (maxGrades[m] < 1)
-    {
-      ImGui::PushID(1);
-      ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(Default::clrLightGrey));
-      ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(Default::clrLightGrey));
-      ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(Default::clrLightGrey));
-      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(Default::clrMinor));
-
-      ImGui::Button(ToString(ModuleName(m)), buttonSize);
-
-      ImGui::PopStyleColor(4);
-      ImGui::PopID();
-      continue;
-    }
-
-    moduleButtons[m].Render();
-
-    if (!moduleButtons[m].IsOn())
-      continue;
-
-    ImGui::SameLine();
-
-    ImGui::PushID(1);
-
-    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(Default::clrMajor));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(Default::clrMajor));
-    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(Default::clrMinor));
-    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(Default::clrMinor));
-    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(Default::clrMinor));
-    ImGui::SetNextItemWidth(50.f);
-    sprintf(buf, "##modLevel%u", m);
-
-    if (g_GameData.moduleUpgradeLevel[m] < 1)
-      g_GameData.moduleUpgradeLevel[m] = 1;
-    if (g_GameData.moduleUpgradeLevel[m] > maxGrades[m])
-      g_GameData.moduleUpgradeLevel[m] = maxGrades[m];
-
-    ImGui::SliderInt(buf, &g_GameData.moduleUpgradeLevel[m], 1, maxGrades[m]);
-
-    // Need this as ImGui::SliderInt is bugged for ranges [x, x]
-    if (g_GameData.moduleUpgradeLevel[m] < 1)
-      g_GameData.moduleUpgradeLevel[m] = 1;
-
-    ImGui::PopStyleColor(5);
-    ImGui::PopID();
-  }
-
-  ImGui::SetCursorPos(ImVec2(60, 515));
-  if (ImGui::Button("Clear##ModuleClass", ImVec2(120, 25)))
-  {
-    for (uint32_t m = 0; m < ModuleCOUNT; m++)
-    {
-      if (GetModuleClass(ModuleName(m)) != currentClass)
-        continue;
-
-      moduleButtons[m].SetState(false);
-    }
-  }
-  ImGui::SameLine();
-
-  if (ImGui::Button("Clear All##ModuleClass", ImVec2(120, 25)))
-  {
-    for (uint32_t i = 0; i < ModuleCOUNT; i++)
-      moduleButtons[i].SetState(false);
-  }
-
-  g_GameData.selectedModules = 0;
-  for (uint32_t i = 0; i < ModuleCOUNT; i++)
-  {
-    if (moduleButtons[i].IsOn())
-      g_GameData.selectedModules |= (1ull << i);
-    else
-      g_GameData.selectedModules &= ~(1ull << i);
-  }
-
-  ImGui::End();
-}
-
-void DoSystemWindow()
-{
-  static const char * systems[] =
-  {
-#undef ITEM2
-#undef ITEM3
-#define ITEM2(a, r) #a,
-#define ITEM3(a, r, str) str,
-    UNROLL_SYSTEMS
-  };
-
-  static int startSystem = int(sShinrartaDezhra);
+  static int startSystem = 0;
    
   ImGui::SetNextWindowPos(ImVec2(5, 5));
   ImGui::SetNextWindowSize(ImVec2(320, 60));
@@ -403,188 +427,119 @@ void DoSystemWindow()
   ImGui::Text("Choose a start system");
   ImGui::Spacing();
   ImGui::SetNextItemWidth(280);
-  ImGui::Combo("##Start System", &startSystem, systems, IM_ARRAYSIZE(systems));
+  ImGui::Combo("##Start System", &startSystem, guiData.ppSystems, guiData.systemsCount);
   ImGui::End();
 
-  g_GameData.startSystem = SystemName(startSystem);
+  g_GameData.startSystem = std::string(guiData.ppSystems[startSystem]);
 }
 
-void DoOutputWindow()
-{
-  ImGui::SetNextWindowPos(ImVec2(876, 5));
-  ImGui::SetNextWindowSize(ImVec2(350, 635));
-  ImGui::Begin("Output", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
-  ImGui::PushID(1);
-  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(0, 200, 0)));
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(ImColor(0, 225, 0)));
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(ImColor(0, 255, 0)));
-  static char buf[2048] = {}; // TODO temp buffer for now, but come up with a better solution
-  if (ImGui::Button("Run!", ImVec2(50, 25)))
-  {
-    std::vector<SystemNode> path = FindShortestPath(); //TODO this should be in GameData.
-    std::stringstream ss;
-
-    int count = 0;
-    for (auto const & node : path)
-    {
-      count++;
-      ss << count << ": " << ToString(GetEngineer(node.name)) << ", " << ToString(node.name);
-      for (auto const & mg : node.modules)
-        ss << "\n    G" << (int)mg.Grade() << ": " << ToString(mg.Name());
-      ss << "\n";
-    }
-
-    ss << "\nTotal distance: " << PathDistance(path) << "ly";
-    sprintf(buf, "%s", ss.str().c_str());
-  }
-  ImGui::Text("%s", buf);
-  ImGui::PopStyleColor(3);
-  ImGui::PopID();
-
-  ImGui::SetCursorPos(ImVec2(90, 580));
-  if (ImGui::Button("Clear##Output", ImVec2(120, 25)))
-  {
-    buf[0] = 0;
-  }
-  ImGui::SameLine();
-
-  if (ImGui::Button("Save##Output", ImVec2(120, 25)))
-  {
-    ImGui::OpenPopup("Save to file");
-  }
-
-  if (ImGui::BeginPopupModal("Save to file", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
-  {
-    static char fileBuf[1024] = "ede_path.txt";
-    ImGui::InputText("File name", fileBuf, 1024);
-
-    static bool trySave = false;
-    if (ImGui::Button("OK", ImVec2(120, 0)))
-    {
-      trySave = true;
-      std::ifstream ifs(fileBuf);
-      
-      if (ifs.is_open())
-        ImGui::OpenPopup("File already exists!");
-      ifs.close();
-    }
-
-    if (trySave)
-    {
-      if (ImGui::BeginPopupModal("File already exists!", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
-      {
-        ImGui::Text("Overwrite?");
-        if (ImGui::Button("Yes", ImVec2(80, 25)))
-          ImGui::CloseCurrentPopup();
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(80, 25)))
-        {
-          trySave = false;
-          ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-      }
-      else
-      {
-        trySave = false;
-        ImGui::CloseCurrentPopup();
-        std::ofstream ofs(fileBuf);
-        ofs << buf;
-        ImGui::CloseCurrentPopup();
-      }
-    }
-    
-    ImGui::SetItemDefaultFocus();
-    ImGui::SameLine();
-    if (ImGui::Button("Cancel", ImVec2(120, 0)))
-    {
-      ImGui::CloseCurrentPopup();
-    }
-    ImGui::EndPopup();
-  }
-
-  ImGui::End();
-}
-
-//#include <fstream>
-//void MakeJSON()
+//void DoOutputWindow()
 //{
-//  std::ofstream ofs("EDEPaths.json");
-//
-//  if (!ofs.good())
-//    return;
-//
-//  ofs << "{";
-//
-//  // Systems
+//  ImGui::SetNextWindowPos(ImVec2(876, 5));
+//  ImGui::SetNextWindowSize(ImVec2(350, 635));
+//  ImGui::Begin("Output", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
+//  ImGui::PushID(1);
+//  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(0, 200, 0)));
+//  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(ImColor(0, 225, 0)));
+//  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(ImColor(0, 255, 0)));
+//  static char buf[2048] = {}; // TODO temp buffer for now, but come up with a better solution
+//  if (ImGui::Button("Run!", ImVec2(50, 25)))
 //  {
-//    ofs << "\n  \"systems\":[";
-//    for (uint32_t i = 0; i < SystemCOUNT; i++)
-//    {
-//      ofs << "\n    {\"name\":\"" << ToString(SystemName(i)) << "\",\"position\":[" 
-//        << g_GameData.system[i].position[0] << ", "
-//        << g_GameData.system[i].position[1] << ", "
-//        << g_GameData.system[i].position[2] << "]}";
+//    std::vector<SystemNode> path = FindShortestPath(); //TODO this should be in GameData.
+//    std::stringstream ss;
 //
-//      if (i < SystemCOUNT - 1)
-//        ofs << ",";
+//    int count = 0;
+//    for (auto const & node : path)
+//    {
+//      count++;
+//      ss << count << ": " << ToString(GetEngineer(node.name)) << ", " << ToString(node.name);
+//      for (auto const & mg : node.modules)
+//        ss << "\n    G" << (int)mg.Grade() << ": " << ToString(mg.Name());
+//      ss << "\n";
 //    }
-//    ofs << "\n  ],";
+//
+//    ss << "\nTotal distance: " << PathDistance(path) << "ly";
+//    sprintf(buf, "%s", ss.str().c_str());
+//  }
+//  ImGui::Text("%s", buf);
+//  ImGui::PopStyleColor(3);
+//  ImGui::PopID();
+//
+//  ImGui::SetCursorPos(ImVec2(90, 580));
+//  if (ImGui::Button("Clear##Output", ImVec2(120, 25)))
+//  {
+//    buf[0] = 0;
+//  }
+//  ImGui::SameLine();
+//
+//  if (ImGui::Button("Save##Output", ImVec2(120, 25)))
+//  {
+//    ImGui::OpenPopup("Save to file");
 //  }
 //
-//  // Modules
+//  if (ImGui::BeginPopupModal("Save to file", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
 //  {
-//    ofs << "\n  \"modules\":[";
-//    for (uint32_t i = 0; i < ModuleCOUNT; i++)
-//    {
-//      ofs << "\n    {\"name\":\"" << ToString(ModuleName(i)) << "\",\"class\":\"" 
-//        << ToString(GetModuleClass(ModuleName(i))) << "\"}";
+//    static char fileBuf[1024] = "ede_path.txt";
+//    ImGui::InputText("File name", fileBuf, 1024);
 //
-//      if (i < ModuleCOUNT - 1)
-//        ofs << ",";
+//    static bool trySave = false;
+//    if (ImGui::Button("OK", ImVec2(120, 0)))
+//    {
+//      trySave = true;
+//      std::ifstream ifs(fileBuf);
+//      
+//      if (ifs.is_open())
+//        ImGui::OpenPopup("File already exists!");
+//      ifs.close();
 //    }
-//    ofs << "\n  ],";
-//  }
 //
-//  // Engineers
-//  {
-//    ofs << "\n  \"engineers\":[";
-//    for (uint32_t e = 0; e < EngineerCOUNT; e++)
+//    if (trySave)
 //    {
-//      ofs << "\n    {";
-//      ofs << "\n      \"name\":\"" << ToString(EngineerName(e)) << "\",";
-//      ofs << "\n      \"system\":\"" << ToString(SystemName(GetSystem(EngineerName(e)))) << "\",";
-//      ofs << "\n      \"modules\":[";
-//
-//      bool first = true;
-//      for (uint32_t m = 0; m < ModuleCOUNT; m++)
+//      if (ImGui::BeginPopupModal("File already exists!", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
 //      {
-//        if (g_GameData.engineer[e].moduleGrade[m] == 0)
-//          continue;
-//
-//        if (!first)
-//          ofs << ",";
-//        first = false;
-//
-//        ofs << "\n        {\"name\":\"" << ToString(ModuleName(m)) << "\",\"grade\":" << g_GameData.engineer[e].moduleGrade[m] << "}";
+//        ImGui::Text("Overwrite?");
+//        if (ImGui::Button("Yes", ImVec2(80, 25)))
+//          ImGui::CloseCurrentPopup();
+//        ImGui::SameLine();
+//        if (ImGui::Button("Cancel", ImVec2(80, 25)))
+//        {
+//          trySave = false;
+//          ImGui::CloseCurrentPopup();
+//        }
+//        ImGui::EndPopup();
 //      }
-//
-//      ofs << "\n      ]";
-//      ofs << "\n    }";
-//
-//      if (e < EngineerCOUNT - 1)
-//        ofs << ",";
+//      else
+//      {
+//        trySave = false;
+//        ImGui::CloseCurrentPopup();
+//        std::ofstream ofs(fileBuf);
+//        ofs << buf;
+//        ImGui::CloseCurrentPopup();
+//      }
 //    }
-//    ofs << "\n  ]";
+//    
+//    ImGui::SetItemDefaultFocus();
+//    ImGui::SameLine();
+//    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+//    {
+//      ImGui::CloseCurrentPopup();
+//    }
+//    ImGui::EndPopup();
 //  }
 //
-//  ofs << "\n}";
+//  ImGui::End();
 //}
 
 void Run()
 {
   bool show_demo_window = false;
   ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
+
+  GUIData guiData = {};
+  if (!InitGuiData(guiData))
+  {
+    return;
+  }
 
   bool done = false;
   while (!done)
@@ -608,10 +563,10 @@ void Run()
     if (show_demo_window)
       ImGui::ShowDemoWindow(&show_demo_window);
 
-    DoEngineersWindow();
-    DoModuleWindow();
-    DoSystemWindow();
-    DoOutputWindow();
+    //DoEngineersWindow();
+    //DoModuleWindow();
+    DoSystemWindow(guiData);
+    //DoOutputWindow();
 
     // Rendering
     ImGui::Render();
@@ -621,40 +576,8 @@ void Run()
 
     g_pSwapChain->Present(1, 0); // Present with vsync
   }
-}
 
-float Distance(std::initializer_list<SystemName> systems)
-{
-  float result = 0.f;
-  auto it0 = systems.begin();
-  auto it1 = it0;
-  it1++;
-  while (it1 != systems.end())
-  {
-    SystemName ni = *it0;
-    SystemName nj = *it1;
-
-    Float3 pi = g_GameData.system[*it0].position;
-    Float3 pj = g_GameData.system[*it1].position;
-
-    result += (pi - pj).Length();
-
-    it0 = it1;
-    it1++;
-  }
-  return result;
-}
-
-void Tests()
-{
-  {
-    //Start system = Shinrarta Dezhra, Modules: FSD, Armour
-    float f = Distance({sShinrartaDezhra, sDeciat, sKuk});
-  }
-  {
-    //Start system = Shinrarta Dezhra, Modules: Power distributor, Shileds, Shiled booster
-    float f = Distance({sShinrartaDezhra, sLeesti, sWyrd, sLaksak});
-  }
+  DestroyGUIData(guiData);
 }
 
 // Helper functions

@@ -56,6 +56,8 @@ project "EDEngineerPaths"
     "{COPY} %{wks.location}/3rdParty/SDL2/lib/x64/SDL2.dll %{cfg.targetdir}"
   }
   
+  defines     { "_CRT_SECURE_NO_WARNINGS" }
+  
   filter "configurations:Debug"
 		runtime "Debug"
 		symbols "on"

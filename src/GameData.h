@@ -8,6 +8,8 @@
 
 #include "utils.h"
 
+#define UNKNOWN_REGION "Unkown"
+
 struct SystemData
 {
   Float3 position;
@@ -21,6 +23,7 @@ struct ModuleData
 struct EngineerData
 {
   std::string system;
+  std::string Class;
   std::map<std::string, int> moduleGrades;
 };
 
@@ -28,44 +31,37 @@ typedef std::map<std::string, SystemData> SystemMap;
 typedef std::map<std::string, ModuleData> ModuleMap;
 typedef std::map<std::string, EngineerData> EngineerMap;
 
-enum class Region
-{
-  Bubble,
-  Colonial,
-  Unknown
-};
-
-struct ModuleSelect
+struct ModuleOptions
 {
   int gradeTarget;
-  int place; // 0 = no place
+  int priority;
 };
 
-struct GameData
+class GameData
 {
+public:
+
+  static int const MinPriority = 1;
+  static int const MaxPriority = 9;
+
   GameData();
 
   bool Load(std::wstring const & filePath);
   const std::vector<std::string> * GetParsingMessages() const;
 
   std::string GetEngineer(std::string const & system) const;
-  Region GetRegion(std::string const & system) const;
-
-  static uint8_t const MinPriority = 1;
-  static uint8_t const MaxPriority = 9;
 
   std::set<std::string> selectedEngineers;
-  std::map<std::string, ModuleSelect> selectedModules;
+  std::map<std::string, ModuleOptions> selectedModules;
 
   std::string startSystem;
 
+  std::set<std::string> engineerClasses;
   SystemMap systems;
   ModuleMap modules;
   EngineerMap engineers;
 };
 
 extern GameData g_GameData;
-
-char const * ToString(Region);
 
 #endif

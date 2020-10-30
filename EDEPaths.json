@@ -24,7 +24,8 @@
     {"name":"Shinrarta Dezhra","position":[55.7188, 17.5938, 27.1563]},
     {"name":"Shenve","position":[351.969, -373.469, -711.094]},
     {"name":"Alioth","position":[-33.6563, 72.4688, -20.6563]},
-    {"name":"Achenar","position":[67.5, -119.469, 24.8438]}
+    {"name":"Achenar","position":[67.5, -119.469, 24.8438]},
+    {"name":"Brestla","position":[159.46875, -103.75, -19.6875]},
   ],
   "modules":[
     {"name":"Armour","class":"Core"},
@@ -70,7 +71,8 @@
   "engineers":[
     {
       "name":"Elvira Martuuk",
-      "system":"Khun",
+      "system": "Khun",
+      "class": "The Bubble",
       "modules":[
         {"name":"Thrusters","grade":2},
         {"name":"Frame Shift Drive","grade":5},
@@ -81,6 +83,7 @@
     {
       "name":"The Dweller",
       "system":"Wyrd",
+      "class": "The Bubble",
       "modules":[
         {"name":"Power Distributor","grade":5},
         {"name":"Burst Laser","grade":3},
@@ -91,6 +94,7 @@
     {
       "name":"Felicity Farseer",
       "system":"Deciat",
+      "class": "The Bubble",
       "modules":[
         {"name":"Power Plant","grade":1},
         {"name":"Thrusters","grade":3},
@@ -104,6 +108,7 @@
     {
       "name":"Tod \"The Blaster\" Mcquinn",
       "system":"Wolf 397",
+      "class": "The Bubble",
       "modules":[
         {"name":"Multi-Cannon","grade":5},
         {"name":"Rail Gun","grade":5},
@@ -114,6 +119,7 @@
     {
       "name":"Liz Ryder",
       "system":"Eurybia",
+      "class": "The Bubble",
       "modules":[
         {"name":"Armour","grade":1},
         {"name":"Hull Reinforcement Package","grade":1},
@@ -126,6 +132,7 @@
     {
       "name":"Mel Brandon",
       "system":"Luchtaine",
+      "class": "Colonia",
       "modules":[
         {"name":"Thrusters","grade":5},
         {"name":"Frame Shift Drive","grade":5},
@@ -141,6 +148,7 @@
     {
       "name":"Masha Hicks",
       "system":"Tir",
+      "class": "Colonia",
       "modules":[
         {"name":"Collector Limpet Controller","grade":5},
         {"name":"Prospector Limpet Controller","grade":5},
@@ -156,6 +164,7 @@
     {
       "name":"Juri Ishmaak",
       "system":"Giryak",
+      "class": "The Bubble",
       "modules":[
         {"name":"Sensors","grade":5},
         {"name":"Detailed Surface Scanner","grade":5},
@@ -171,6 +180,7 @@
     {
       "name":"Petra Olmanova",
       "system":"Asura",
+      "class": "Colonia",
       "modules":[
         {"name":"Armour","grade":5},
         {"name":"Auto Field-Maintenance Unit","grade":4},
@@ -188,6 +198,7 @@
     {
       "name":"Etienne Dorn",
       "system":"Los",
+      "class": "Colonia",
       "modules":[
         {"name":"Power Plant","grade":5},
         {"name":"Life Support","grade":5},
@@ -204,6 +215,7 @@
     {
       "name":"Zacariah Nemo",
       "system":"Yoru",
+      "class": "The Bubble",
       "modules":[
         {"name":"Multi-Cannon","grade":3},
         {"name":"Fragment Cannon","grade":5},
@@ -213,6 +225,7 @@
     {
       "name":"Lei Chung",
       "system":"Laksak",
+      "class": "The Bubble",
       "modules":[
         {"name":"Sensors","grade":5},
         {"name":"Shield Generator","grade":5},
@@ -223,6 +236,7 @@
     {
       "name":"Colonel Bris Decker",
       "system":"Sol",
+      "class": "The Bubble",
       "modules":[
         {"name":"Frame Shift Drive","grade":4},
         {"name":"Frame Shift Drive Interdictor","grade":4}
@@ -231,6 +245,7 @@
     {
       "name":"Selene Jean",
       "system":"Kuk",
+      "class": "The Bubble",
       "modules":[
         {"name":"Armour","grade":5},
         {"name":"Hull Reinforcement Package","grade":5}
@@ -239,6 +254,7 @@
     {
       "name":"Hera Tani",
       "system":"Kuwemaki",
+      "class": "The Bubble",
       "modules":[
         {"name":"Power Plant","grade":5},
         {"name":"Power Distributor","grade":3},
@@ -249,6 +265,7 @@
     {
       "name":"Marco Qwent",
       "system":"Sirius",
+      "class": "The Bubble",
       "modules":[
         {"name":"Power Plant","grade":4},
         {"name":"Power Distributor","grade":3}
@@ -257,6 +274,7 @@
     {
       "name":"Ram Tah",
       "system":"Meene",
+      "class": "The Bubble",
       "modules":[
         {"name":"Collector Limpet Controller","grade":4},
         {"name":"Prospector Limpet Controller","grade":4},
@@ -271,6 +289,7 @@
     {
       "name":"The Sarge",
       "system":"Beta-3 Tucani",
+      "class": "The Bubble",
       "modules":[
         {"name":"Collector Limpet Controller","grade":5},
         {"name":"Prospector Limpet Controller","grade":5},
@@ -283,6 +302,7 @@
     {
       "name":"Didi Vatermann",
       "system":"Leesti",
+      "class": "The Bubble",
       "modules":[
         {"name":"Shield Generator","grade":3},
         {"name":"Shiled Booster","grade":5}
@@ -291,6 +311,7 @@
     {
       "name":"Broo Tarquin",
       "system":"Muang",
+      "class": "The Bubble",
       "modules":[
         {"name":"Burst Laser","grade":5},
         {"name":"Pulse Laser","grade":5},
@@ -300,6 +321,7 @@
     {
       "name":"Professor Palin",
       "system":"Arque",
+      "class": "The Bubble",
       "modules":[
         {"name":"Thrusters","grade":5},
         {"name":"Frame Shift Drive","grade":3}
@@ -308,6 +330,7 @@
     {
       "name":"Lori Jameson",
       "system":"Shinrarta Dezhra",
+      "class": "The Bubble",
       "modules":[
         {"name":"Life Support","grade":4},
         {"name":"Sensors","grade":5},
@@ -324,6 +347,7 @@
     {
       "name":"Chloe Sedesi",
       "system":"Shenve",
+      "class": "The Bubble",
       "modules":[
         {"name":"Thrusters","grade":5},
         {"name":"Frame Shift Drive","grade":3}
@@ -332,6 +356,7 @@
     {
       "name":"Bill Turner",
       "system":"Alioth",
+      "class": "The Bubble",
       "modules":[
         {"name":"Frame Shift Drive","grade":3},
         {"name":"Life Support","grade":3},
@@ -348,6 +373,7 @@
     {
       "name":"Tiana Fortune",
       "system":"Achenar",
+      "class": "The Bubble",
       "modules":[
         {"name":"Sensors","grade":5},
         {"name":"Frame Shift Drive Interdictor","grade":3},

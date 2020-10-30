@@ -34,31 +34,6 @@ std::string GameData::GetEngineer(std::string const & system) const
   return "";
 }
 
-Region GameData::GetRegion(std::string const & system) const
-{
-  auto const & it = systems.find(system);
-  if (it == systems.cend())
-    return Region::Unknown;
-
-  float toSol = (Float3(0.f, 0.f, 0.f) - it->second.position).Length();
-  float toColonia = (Float3(-9530.5f, -910.28125f, 19808.125f) - it->second.position).Length();
-
-  return (toSol < toColonia ? Region::Bubble : Region::Colonial);
-}
-
-char const * ToString(Region name)
-{
-  static const char * str[] = 
-  {
-    "Bubble",
-    "Colonia",
-    "Unkown",
-  };
-
-  return str[static_cast<int>(name)];
-}
-
-
 bool ReadString(std::ifstream & ifs, std::string & str)
 {
   str.clear();
@@ -326,6 +301,10 @@ bool ReadEngineer(std::ifstream & ifs, std::string & name, EngineerData & data)
     {
       CHECK(ReadString(ifs, data.system));
     }
+    else if (str == "class")
+    {
+      CHECK(ReadString(ifs, data.Class));
+    }
     else if (str == "modules")
     {
       CHECK(ReadEngineerModules(ifs, data.moduleGrades));
@@ -405,6 +384,10 @@ bool GameData::Load(std::wstring const & filePath)
     DISCARD_NEXT_IF(',');
     PEEK(c);
   } while (c != '}');
+
+  engineerClasses.clear();
+  for (auto const & kv : engineers)
+    engineerClasses.insert(kv.second.Class);
 
   return true;
 }
