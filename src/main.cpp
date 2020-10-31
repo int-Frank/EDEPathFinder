@@ -24,11 +24,26 @@
 
 struct Default
 {
+  static int const windowWidth = 1194;
+  static int const windowHeight = 645;
+
   static ImColor clrLightGrey;
   static ImColor clrMinor;
   static ImColor clrMajor;
   static ImColor textHighlight1;
   static ImColor textHighlight2;
+};
+
+struct GUIData
+{
+  int systemsCount;
+  char ** ppSystems;
+
+  int engineerClassCount;
+  char ** ppEngineerClasses;
+
+  int moduleClassCount;
+  char ** ppModuleClasses;
 };
 
 ImColor Default::clrLightGrey = ImColor(100, 100, 100);
@@ -64,18 +79,6 @@ void Alert(char const * format, ...)
 
   MessageBoxA(NULL, buffer, "Message", MB_OK | MB_ICONERROR);
 }
-
-struct GUIData
-{
-  int systemsCount;
-  char ** ppSystems;
-
-  int engineerClassCount;
-  char ** ppEngineerClasses;
-
-  int moduleClassCount;
-  char ** ppModuleClasses;
-};
 
 bool InitGuiData(GUIData & data)
 {
@@ -142,7 +145,6 @@ void DestroyGUIData(GUIData & data)
   data.moduleClassCount = 0;
 }
 
-
 bool Init()
 {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
@@ -153,7 +155,7 @@ bool Init()
 
   // Setup window
   SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_ALLOW_HIGHDPI);
-  g_pWindow = SDL_CreateWindow("ED Engineer Path Finder", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1194, 645, window_flags);
+  g_pWindow = SDL_CreateWindow("ED Engineer Path Finder", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Default::windowWidth, Default::windowHeight, window_flags);
   SDL_SysWMinfo wmInfo;
   SDL_VERSION(&wmInfo.version);
   SDL_GetWindowWMInfo(g_pWindow, &wmInfo);
