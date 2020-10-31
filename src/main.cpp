@@ -432,8 +432,8 @@ void DoOutputWindow(GUIData & guiData)
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(0, 200, 0)));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(ImColor(0, 225, 0)));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(ImColor(0, 255, 0)));
-  ImGui::SameLine(ImGui::GetWindowWidth() - 70);
-  if (ImGui::Button("Run!", ImVec2(60, 25)))
+  ImGui::SameLine(ImGui::GetWindowWidth() - 90);
+  if (ImGui::Button("Run!", ImVec2(80, 25)))
   {
     std::vector<SystemNode> path;
     if (!FindBestRoute(path))
