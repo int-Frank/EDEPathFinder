@@ -40,6 +40,7 @@ static ModuleItemList GetSelectedModules()
     item.gradeTarget = kv.second.gradeTarget;
     item.name = kv.first;
     item.counter = 0;
+    item.priority = kv.second.priority;
     result.push_back(item);
   }
   return result;
@@ -362,7 +363,7 @@ static EngineerModuleMap GetEngineerModuleMap(ModuleItemList const & modules)
   return result;
 }
 
-static bool FindBestRoute(std::vector<SystemNode> & out)
+bool FindBestRoute(std::vector<SystemNode> & out)
 {
   bool result = true;
   try
@@ -380,8 +381,8 @@ static bool FindBestRoute(std::vector<SystemNode> & out)
     {
       ModuleItemList moduleSet = ExtractModules(modules, priority);
       std::vector<SystemNode> path;
-      path.push_back(path.back());
-      FindShortestPath(engineers, modules, path);
+      path.push_back(out.back());
+      FindShortestPath(engineers, moduleSet, path);
       out.insert(out.end(), ++path.begin(), path.end());
     }
   }

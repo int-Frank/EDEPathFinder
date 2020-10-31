@@ -1,4 +1,6 @@
 {
+  "engineerClassDescription":"Region",
+  "moduleClassDescription":"Category",
   "systems":[
     {"name":"Khun","position":[-171.594, 19.9688, -56.9688]},
     {"name":"Wyrd","position":[-11.625, 31.5313, -3.9375]},

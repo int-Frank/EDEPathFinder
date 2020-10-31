@@ -17,14 +17,14 @@ struct SystemData
 
 struct ModuleData
 {
-  std::string moduleClass;
+  std::string Class;
 };
 
 struct EngineerData
 {
   std::string system;
   std::string Class;
-  std::map<std::string, int> moduleGrades;
+  std::vector<std::pair<std::string, int>> moduleGrades; // Sorted by grade, highest to lowest
 };
 
 typedef std::map<std::string, SystemData> SystemMap;
@@ -56,7 +56,10 @@ public:
 
   std::string startSystem;
 
-  std::set<std::string> engineerClasses;
+  std::string moduleClassStr;
+  std::string engineerClassStr;
+
+  std::vector<std::string> engineerClasses;
   SystemMap systems;
   ModuleMap modules;
   EngineerMap engineers;

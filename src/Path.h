@@ -18,7 +18,7 @@ struct SystemNode
   std::vector<ModuleNode> modules;
 };
 
-std::vector<SystemNode> FindBestRoute();
+bool FindBestRoute(std::vector<SystemNode> & out);
 float PathDistance(std::vector<SystemNode> const &);
 
 #endif

@@ -186,7 +186,7 @@ bool ReadModule(std::ifstream & ifs, std::string & name, ModuleData & data)
     }
     else if (str == "class")
     {
-      CHECK(ReadString(ifs, data.moduleClass));
+      CHECK(ReadString(ifs, data.Class));
     }
     else
     {
@@ -258,7 +258,7 @@ bool ReadEngineerModule(std::ifstream & ifs, std::string & name, int & grade)
   return true;
 }
 
-bool ReadEngineerModules(std::ifstream & ifs, std::map<std::string, int> & modules)
+bool ReadEngineerModules(std::ifstream & ifs, std::vector<std::pair<std::string, int>> & modules)
 {
   ASSERT_NEXT('[');
 
@@ -270,10 +270,36 @@ bool ReadEngineerModules(std::ifstream & ifs, std::map<std::string, int> & modul
     std::string name;
     CHECK(ReadEngineerModule(ifs, name, grade));
 
-    if (modules.find(name) != modules.end())
+    bool found = false;
+    for (auto const & kv : modules)
+    {
+      if (kv.first == name)
+      {
+        bool found = true;
+        break;
+      }
+    }
+
+    if (found)
+    {
       PUSH_ERROR_MESSAGE("WARNING: Duplicate module grade found: '%s'", name.c_str());
+    }
     else
-      modules[name] = grade;
+    {
+      bool inserted = false;
+      for (auto it = modules.begin(); it != modules.end(); it++)
+      {
+        if (grade >= it->second)
+        {
+          modules.insert(it, std::pair<std::string, int>(name, grade));
+          inserted = true;
+          break;
+        }
+      }
+
+      if (!inserted)
+        modules.push_back(std::pair<std::string, int>(name, grade));
+    }
 
     DISCARD_NEXT_IF(',');
   }
@@ -346,6 +372,10 @@ bool ReadEngineers(std::ifstream & ifs, EngineerMap & engineerMap)
 
 bool GameData::Load(std::wstring const & filePath)
 {
+  // Set Defaults
+  engineerClassStr = "Region";
+  moduleClassStr = "Category";
+
   std::ifstream ifs(filePath);
 
   if (!ifs.good())
@@ -367,6 +397,14 @@ bool GameData::Load(std::wstring const & filePath)
     {
       CHECK(ReadSystems(ifs, systems));
     }
+    else if (str == "engineerClassDescription")
+    {
+      CHECK(ReadString(ifs, engineerClassStr));
+    }
+    else if (str == "moduleClassDescription")
+    {
+      CHECK(ReadString(ifs, moduleClassStr));
+    }
     else if (str == "modules")
     {
       CHECK(ReadModules(ifs, modules));
@@ -387,7 +425,20 @@ bool GameData::Load(std::wstring const & filePath)
 
   engineerClasses.clear();
   for (auto const & kv : engineers)
-    engineerClasses.insert(kv.second.Class);
+  {
+    bool found = false;
+    for (auto const & str : engineerClasses)
+    {
+      if (str == kv.second.Class)
+      {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      engineerClasses.push_back(kv.second.Class);
+  }
 
   return true;
 }
