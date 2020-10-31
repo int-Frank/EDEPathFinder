@@ -23,7 +23,7 @@ Check the latest release or [**download**](https://github.com/int-Frank/EDEPathF
 
 This is a classic [travelling salesman problem](https://en.wikipedia.org/wiki/Travelling_salesman_problem). I have used a dynamic programming approach, which should give the exact solution. However, the time it takes to find a solution grows exponentially with the number of systems. This should not be noticeable with regular use, but for example if you select every module and every engineer in the bubble, it will take a few minutes to find a solution.
 
-Straight line distance between engineer systems is used. Building a path of every system you need to jump to in between is a far more complicated problem; not really neccessary; clunky; and beyond the scope of what this app sets out to do.
+Straight line distance between engineer systems is used. Building a path of every system you need to jump to in between is not really neccessary and beyond the scope of what this app sets out to do.
 
 For the case where there are multiple choices of engineer when upgrading a particular module (Felicity Farseer and Elvira Martuuk for the FSD for example), both paths are constructed and the shorter of the two is chosen.
 
