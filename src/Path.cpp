@@ -3,7 +3,6 @@
 
 #define GET_SYSTEM(engineerName) g_GameData.engineers.at(engineerName).system
 
-// bool : visited
 typedef std::set<std::string> EngineerList;
 typedef std::map<std::string, std::vector<ModuleNode>> EngineerModuleMap;
 
