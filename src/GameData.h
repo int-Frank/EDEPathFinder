@@ -8,8 +8,6 @@
 
 #include "utils.h"
 
-#define UNKNOWN_REGION "Unkown"
-
 struct SystemData
 {
   Float3 position;

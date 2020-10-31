@@ -1,6 +1,8 @@
 #include "Path.h"
 #include "TSP.h"
 
+// TODO Write up this algorithm
+
 #define GET_SYSTEM(engineerName) g_GameData.engineers.at(engineerName).system
 
 typedef std::set<std::string> EngineerList;
@@ -306,6 +308,23 @@ static EngineerModuleMap GetEngineerModuleMap(ModuleItemList const & modules)
   return result;
 }
 
+static void ExtractAdditionalModules(std::vector<SystemNode> const & path, ModuleItemList & modules)
+{
+  for (auto const & systemNode : path)
+  {
+    for (auto const & moduleNode : systemNode.modules)
+    {
+      for (auto mit = modules.begin(); mit != modules.end();)
+      {
+        if (moduleNode.moduleName == mit->name)
+          mit = modules.erase(mit);
+        else
+          mit++;
+      }
+    }
+  }
+}
+
 bool FindBestRoute(std::vector<SystemNode> & out)
 {
   bool result = true;
@@ -326,6 +345,7 @@ bool FindBestRoute(std::vector<SystemNode> & out)
       std::vector<SystemNode> path;
       path.push_back(out.back());
       FindShortestPath(engineers, moduleSet, path);
+      ExtractAdditionalModules(path, modules);
       out.insert(out.end(), ++path.begin(), path.end());
     }
   }

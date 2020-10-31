@@ -170,6 +170,8 @@ bool ReadSystems(std::ifstream & ifs, SystemMap & systemMap)
 
 bool ReadModule(std::ifstream & ifs, std::string & name, ModuleData & data)
 {
+  data.Class = "Unknown";
+
   ASSERT_NEXT('{');
 
   while (true)
@@ -309,6 +311,8 @@ bool ReadEngineerModules(std::ifstream & ifs, std::vector<std::pair<std::string,
 
 bool ReadEngineer(std::ifstream & ifs, std::string & name, EngineerData & data)
 {
+  data.Class = "Unknown";
+
   ASSERT_NEXT('{');
 
   while (true)
