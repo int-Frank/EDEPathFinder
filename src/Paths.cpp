@@ -4,7 +4,7 @@
 #define GET_SYSTEM(engineerName) g_GameData.engineers.at(engineerName).system
 
 // bool : visited
-typedef std::map<std::string, bool> EngineerList;
+typedef std::set<std::string> EngineerList;
 typedef std::map<std::string, std::vector<ModuleNode>> EngineerModuleMap;
 
 struct ModuleItem
@@ -66,17 +66,17 @@ static void AssignEngineersToModules(ModuleItemList & modules)
           it->grade = it->gradeTarget;
         }
 
-        it->engineers.insert(std::pair<std::string, bool>(engineerName, false));
+        it->engineers.insert(engineerName);
       }
       else if (kvmg.second > it->grade)
       {
         it->engineers.clear();
-        it->engineers.insert(std::pair<std::string, bool>(engineerName, false));
+        it->engineers.insert(engineerName);
         it->grade = kvmg.second;
       }
       else if (kvmg.second == it->grade)
       {
-        it->engineers.insert(std::pair<std::string, bool>(engineerName, false));
+        it->engineers.insert(engineerName);
       }
     }
   }
@@ -155,32 +155,28 @@ void SortToMinimumDistance(std::vector<SystemNode> & systems)
   }
 }
 
-static bool InitModule(ModuleItemList & modules,
-                       ModuleItemList::iterator & module_it,
-                       EngineerList::iterator & engineer_it);
+static bool FindNextValidEngineer_FromModule(ModuleItemList & modules,
+                                             ModuleItemList::iterator & module_it,
+                                             EngineerList::iterator & engineer_it);
 
-static bool InitEngineer(ModuleItemList & modules,
-                         ModuleItemList::iterator & module_it,
-                         EngineerList::iterator & engineer_it)
+// Also return true if current engineer/module is valid
+static bool FindNextValidEngineer_FromEngineer(ModuleItemList & modules,
+                                               ModuleItemList::iterator & module_it,
+                                               EngineerList::iterator & engineer_it)
 {
   if (engineer_it == module_it->engineers.end())
   {
     module_it++;
-    return InitModule(modules, module_it, engineer_it);
-  }
-
-  if (engineer_it->second) // If this engineer has already been visited, move to the next
-  {
-    engineer_it++;
-    return InitEngineer(modules, module_it, engineer_it);
+    return FindNextValidEngineer_FromModule(modules, module_it, engineer_it);
   }
 
   return true;
 }
 
-static bool InitModule(ModuleItemList & modules,
-                       ModuleItemList::iterator & module_it,
-                       EngineerList::iterator & engineer_it)
+// Also return true if current engineer/module is valid
+static bool FindNextValidEngineer_FromModule(ModuleItemList & modules,
+                                             ModuleItemList::iterator & module_it,
+                                             EngineerList::iterator & engineer_it)
 {
   if (module_it == modules.end())
     return false;
@@ -188,18 +184,20 @@ static bool InitModule(ModuleItemList & modules,
   if (module_it->counter != 0)
   {
     module_it++;
-    return InitModule(modules, module_it, engineer_it);
+    return FindNextValidEngineer_FromModule(modules, module_it, engineer_it);
   }
 
   engineer_it = module_it->engineers.begin();
-  return InitEngineer(modules, module_it, engineer_it);
+  return FindNextValidEngineer_FromEngineer(modules, module_it, engineer_it);
 }
 
 static void ProcessBuild(std::vector<SystemNode> & currentBuild,
                          std::vector<SystemNode> & currentBest)
 {
   SortToMinimumDistance(currentBuild);
-  if (PathDistance(currentBuild) < PathDistance(currentBuild))
+  if (currentBest.size() == 1)
+    currentBest = currentBuild;
+  else if (PathDistance(currentBuild) < PathDistance(currentBest))
     currentBest = currentBuild;
 }
 
@@ -208,11 +206,10 @@ static void VisitEngineer(ModuleItemList & modules,
 {
   for (auto & module : modules)
   {
-    for (auto & engineer : module.engineers)
+    for (auto & engineerName : module.engineers)
     {
-      if (engineer.first == engineerName)
+      if (engineerName == engineerName)
       {
-        engineer.second = true;
         module.counter++;
         break;
       }
@@ -225,11 +222,10 @@ static void UnvisitEngineer(ModuleItemList & modules,
 {
   for (auto & module : modules)
   {
-    for (auto & engineer : module.engineers)
+    for (auto & engineerName : module.engineers)
     {
-      if (engineer.first == engineerName)
+      if (engineerName == engineerName)
       {
-        engineer.second = false;
         module.counter--;
         break;
       }
@@ -240,38 +236,34 @@ static void UnvisitEngineer(ModuleItemList & modules,
 static void RecursiveFindPath(EngineerModuleMap const & engineers,
                               ModuleItemList & modules,
                               ModuleItemList::iterator currentModule,
-                              EngineerList::iterator currentEngineer,
+                              //EngineerList::iterator currentEngineer,
                               std::vector<SystemNode> & currentBuild,
                               std::vector<SystemNode> & currentBest)
 {
-  if (!InitEngineer(modules, currentModule, currentEngineer))
+  if (!FindNextValidEngineer_FromEngineer(modules, currentModule, currentEngineer))
   {
-    ProcessBuild(currentBuild, currentBest);
+    //ProcessBuild(currentBuild, currentBest);
     return;
   }
   
   SystemNode node;
-  node.name = GET_SYSTEM(currentEngineer->first);
-  node.modules = engineers.at(currentEngineer->first);
+  node.name = GET_SYSTEM(*currentEngineer);
+  node.modules = engineers.at(*currentEngineer);
   currentBuild.push_back(node);
 
-  VisitEngineer(modules, currentEngineer->first);
+  VisitEngineer(modules, *currentEngineer);
 
   ModuleItemList::iterator nextModule = currentModule;
+  EngineerList::iterator nextEngineer;
   nextModule++;
 
-  if (!InitModule(modules, currentModule, currentEngineer))
-  {
+  if (!FindNextValidEngineer_FromModule(modules, nextModule, nextEngineer))
     ProcessBuild(currentBuild, currentBest);
-  }
   else
-  {
-    EngineerList::iterator nextEngineer = nextModule->engineers.begin();
     RecursiveFindPath(engineers, modules, nextModule, nextEngineer, currentBuild, currentBest);
-  }
-
+  
   currentBuild.pop_back();
-  UnvisitEngineer(modules, currentEngineer->first);
+  UnvisitEngineer(modules, *currentEngineer);
 
   RecursiveFindPath(engineers, modules, currentModule, ++currentEngineer, currentBuild, currentBest);
 }
@@ -287,7 +279,7 @@ static void AddSystem(ModuleItemList & modules, std::string const & systemName, 
     bool found = false;
     for (auto it = mit->engineers.begin(); it != mit->engineers.end(); it++)
     {
-      if (systemName == GET_SYSTEM(it->first))
+      if (systemName == GET_SYSTEM(*it))
       {
         found = true;
         break;
@@ -352,12 +344,12 @@ static EngineerModuleMap GetEngineerModuleMap(ModuleItemList const & modules)
   EngineerModuleMap result;
   for (auto const & module : modules)
   {
-    for (auto const & kv: module.engineers)
+    for (auto const & engineerName : module.engineers)
     {
       ModuleNode node;
       node.moduleName = module.name;
       node.grade = module.grade;
-      result[kv.first].push_back(node);
+      result[engineerName].push_back(node);
     }
   }
   return result;
