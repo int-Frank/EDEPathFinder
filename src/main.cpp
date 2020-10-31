@@ -398,15 +398,25 @@ void DoSystemWindow(GUIData &guiData)
 
 void DoOutputWindow(GUIData & guiData)
 {
+  static char buf[2048] = {}; // TODO temp buffer for now, but come up with a better solution
+
   ImGui::SetNextWindowPos(ImVec2(839, 70));
-  ImGui::SetNextWindowSize(ImVec2(350, 570));
-  ImGui::Begin("Output", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
-  
+  ImGui::SetNextWindowSize(ImVec2(350, 515));
+  ImGui::Begin("Output text", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
+
+  ImGui::Text("%s", buf);
+
+  ImGui::End();
+
+  ImGui::SetNextWindowPos(ImVec2(839, 590));
+  ImGui::SetNextWindowSize(ImVec2(350, 50));
+  ImGui::Begin("Output buttons", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
+
+  ImGui::Spacing();
   ImGui::PushID(1);
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(0, 200, 0)));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(ImColor(0, 225, 0)));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(ImColor(0, 255, 0)));
-  static char buf[2048] = {}; // TODO temp buffer for now, but come up with a better solution
   if (ImGui::Button("Run!", ImVec2(50, 25)))
   {
     std::vector<SystemNode> path;
@@ -428,18 +438,19 @@ void DoOutputWindow(GUIData & guiData)
     ss << "\nTotal distance: " << PathDistance(path) << "ly";
     sprintf(buf, "%s", ss.str().c_str());
   }
-  ImGui::Text("%s", buf);
   ImGui::PopStyleColor(3);
   ImGui::PopID();
 
-  ImGui::SetCursorPos(ImVec2(90, 520));
-  if (ImGui::Button("Clear##Output", ImVec2(120, 25)))
+  ImGui::SameLine(ImGui::GetWindowWidth() - 220);
+
+  if (ImGui::Button("Clear##Output", ImVec2(100, 25)))
   {
     buf[0] = 0;
   }
-  ImGui::SameLine();
 
-  if (ImGui::Button("Save##Output", ImVec2(120, 25)))
+  ImGui::SameLine(ImGui::GetWindowWidth() - 110);
+
+  if (ImGui::Button("Save##Output", ImVec2(100, 25)))
   {
     ImGui::OpenPopup("Save to file");
   }
