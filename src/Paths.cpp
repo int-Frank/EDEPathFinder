@@ -19,7 +19,7 @@ struct ModuleItem
 
 typedef std::list<ModuleItem> ModuleItemList;
 
-static std::list<ModuleItem>::iterator Find(ModuleItemList & moduleList, std::string const & name)
+static ModuleItemList::iterator Find(ModuleItemList & moduleList, std::string const & name)
 {
   auto it = moduleList.begin();
   for (; it != moduleList.end(); it++)
@@ -155,78 +155,39 @@ void SortToMinimumDistance(std::vector<SystemNode> & systems)
   }
 }
 
-static bool FindNextValidEngineer_FromModule(ModuleItemList & modules,
-                                             ModuleItemList::iterator & module_it,
-                                             EngineerList::iterator & engineer_it);
-
-// Also return true if current engineer/module is valid
-static bool FindNextValidEngineer_FromEngineer(ModuleItemList & modules,
-                                               ModuleItemList::iterator & module_it,
-                                               EngineerList::iterator & engineer_it)
+static ModuleItemList::iterator FindNextValidModule(ModuleItemList & modules,
+                                                    ModuleItemList::iterator module_it)
 {
-  if (engineer_it == module_it->engineers.end())
+  for (; module_it != modules.end(); module_it++)
   {
-    module_it++;
-    return FindNextValidEngineer_FromModule(modules, module_it, engineer_it);
+    if (module_it->counter == 0)
+      break;
   }
-
-  return true;
+  return module_it;
 }
 
-// Also return true if current engineer/module is valid
-static bool FindNextValidEngineer_FromModule(ModuleItemList & modules,
-                                             ModuleItemList::iterator & module_it,
-                                             EngineerList::iterator & engineer_it)
-{
-  if (module_it == modules.end())
-    return false;
-
-  if (module_it->counter != 0)
-  {
-    module_it++;
-    return FindNextValidEngineer_FromModule(modules, module_it, engineer_it);
-  }
-
-  engineer_it = module_it->engineers.begin();
-  return FindNextValidEngineer_FromEngineer(modules, module_it, engineer_it);
-}
-
-static void ProcessBuild(std::vector<SystemNode> & currentBuild,
+static void ProcessBuild(std::vector<SystemNode> const & currentBuild,
                          std::vector<SystemNode> & currentBest)
 {
-  SortToMinimumDistance(currentBuild);
+  std::vector<SystemNode> sortedCurrentBuild = currentBuild;
+  SortToMinimumDistance(sortedCurrentBuild);
   if (currentBest.size() == 1)
-    currentBest = currentBuild;
-  else if (PathDistance(currentBuild) < PathDistance(currentBest))
-    currentBest = currentBuild;
+    currentBest = sortedCurrentBuild;
+  else if (PathDistance(sortedCurrentBuild) < PathDistance(currentBest))
+    currentBest = sortedCurrentBuild;
 }
 
-static void VisitEngineer(ModuleItemList & modules, 
-                          std::string const & engineerName)
+static void ModifyModuleCounter(ModuleItemList & modules, 
+                                std::string const & engineerName,
+                                int value)
 {
   for (auto & module : modules)
   {
-    for (auto & engineerName : module.engineers)
+    for (auto & name : module.engineers)
     {
-      if (engineerName == engineerName)
+      if (name == engineerName)
       {
-        module.counter++;
-        break;
-      }
-    }
-  }
-}
-
-static void UnvisitEngineer(ModuleItemList & modules, 
-                            std::string const & engineerName)
-{
-  for (auto & module : modules)
-  {
-    for (auto & engineerName : module.engineers)
-    {
-      if (engineerName == engineerName)
-      {
-        module.counter--;
+        module.counter += value;
         break;
       }
     }
@@ -236,36 +197,27 @@ static void UnvisitEngineer(ModuleItemList & modules,
 static void RecursiveFindPath(EngineerModuleMap const & engineers,
                               ModuleItemList & modules,
                               ModuleItemList::iterator currentModule,
-                              //EngineerList::iterator currentEngineer,
                               std::vector<SystemNode> & currentBuild,
                               std::vector<SystemNode> & currentBest)
 {
-  if (!FindNextValidEngineer_FromEngineer(modules, currentModule, currentEngineer))
+  for (auto const & engineerName : currentModule->engineers)
   {
-    //ProcessBuild(currentBuild, currentBest);
-    return;
+    SystemNode node;
+    node.name = GET_SYSTEM(engineerName);
+    node.modules = engineers.at(engineerName);
+    currentBuild.push_back(node);
+
+    ModifyModuleCounter(modules, engineerName, 1);
+
+    ModuleItemList::iterator nextModule = FindNextValidModule(modules, currentModule);
+    if (nextModule != modules.end())
+      RecursiveFindPath(engineers, modules, nextModule, currentBuild, currentBest);
+    else
+      ProcessBuild(currentBuild, currentBest);
+
+    currentBuild.pop_back();
+    ModifyModuleCounter(modules, engineerName, -1);
   }
-  
-  SystemNode node;
-  node.name = GET_SYSTEM(*currentEngineer);
-  node.modules = engineers.at(*currentEngineer);
-  currentBuild.push_back(node);
-
-  VisitEngineer(modules, *currentEngineer);
-
-  ModuleItemList::iterator nextModule = currentModule;
-  EngineerList::iterator nextEngineer;
-  nextModule++;
-
-  if (!FindNextValidEngineer_FromModule(modules, nextModule, nextEngineer))
-    ProcessBuild(currentBuild, currentBest);
-  else
-    RecursiveFindPath(engineers, modules, nextModule, nextEngineer, currentBuild, currentBest);
-  
-  currentBuild.pop_back();
-  UnvisitEngineer(modules, *currentEngineer);
-
-  RecursiveFindPath(engineers, modules, currentModule, ++currentEngineer, currentBuild, currentBest);
 }
 
 static void AddSystem(ModuleItemList & modules, std::string const & systemName, std::vector<SystemNode> & out)
@@ -310,7 +262,7 @@ static void FindShortestPath(EngineerModuleMap const & engineers, ModuleItemList
   std::vector<SystemNode> currentBuild;
   currentBuild.push_back(out.at(0));
 
-  RecursiveFindPath(engineers, modules, modules.begin(), modules.begin()->engineers.begin(), currentBuild, out);
+  RecursiveFindPath(engineers, modules, modules.begin(), currentBuild, out);
 }
 
 static std::set<int> ExtractPriorities(ModuleItemList const & modules)
