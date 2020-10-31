@@ -445,7 +445,12 @@ void DoOutputWindow(GUIData & guiData)
     for (auto const & node : path)
     {
       count++;
-      ss << count << ": " << g_GameData.GetEngineer(node.name) << ", " << node.name;
+      ss << count << ": ";
+
+      if (node.modules.size() != 0)
+        ss << g_GameData.GetEngineer(node.name) << ", ";
+
+      ss << node.name;
       for (auto const & mg : node.modules)
         ss << "\n    G" << mg.grade << ": " << mg.moduleName;
       ss << "\n";

@@ -308,7 +308,7 @@ static EngineerModuleMap GetEngineerModuleMap(ModuleItemList const & modules)
   return result;
 }
 
-static void ExtractAdditionalModules(std::vector<SystemNode> const & path, ModuleItemList & modules)
+static void CleanUpModuleList(std::vector<SystemNode> const & path, ModuleItemList & modules)
 {
   for (auto const & systemNode : path)
   {
@@ -345,7 +345,7 @@ bool FindBestRoute(std::vector<SystemNode> & out)
       std::vector<SystemNode> path;
       path.push_back(out.back());
       FindShortestPath(engineers, moduleSet, path);
-      ExtractAdditionalModules(path, modules);
+      CleanUpModuleList(path, modules);
       out.insert(out.end(), ++path.begin(), path.end());
     }
   }
