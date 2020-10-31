@@ -9,8 +9,8 @@ Check the latest release or [**download**](https://github.com/int-Frank/EDEPathF
 ## Use
  
  1. Choose the modules you want to upgrade. For each module:
-     a. select a grade. If you only want the experimental, set the grade to **1**.
-     b. set a priority. Modules with a higher priority will be upgraded first. Try not to overuse though. This was really only designed to pick out one or two critical components to upgrade first, like the FSD and Power Plant. For the underlying routine to work it needs to be able to move things around.
+     1. select a grade. If you only want the experimental, set the grade to **1**.
+     2. set a priority. Modules with a higher priority will be upgraded first. Try not to overuse though. This was really only designed to pick out one or two critical components to upgrade first, like the FSD and Power Plant. For the underlying routine to work it needs to be able to move things around.
  2. Select all the engineers you have unlocked.
  3. Select the system you want to start in. You can add additional systems by editing **EDEPaths.json**.
  4. Run!
