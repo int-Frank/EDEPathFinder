@@ -273,7 +273,7 @@ void DoEngineersWindow(GUIData & guiData)
 
     bool isSelected = g_GameData.selectedEngineers.find(ekv.first) != g_GameData.selectedEngineers.end();
     BeginEliteButton(isSelected);
-    if (ImGui::Button(ekv.first.c_str(), ImVec2(200, 30)))
+    if (ImGui::Button(ekv.first.c_str(), ImVec2(200, 40)))
     {
       if (isSelected)
         g_GameData.selectedEngineers.erase(ekv.first);
@@ -307,7 +307,7 @@ void DoModuleWindow(GUIData & guiData)
 {
   static int moduleClassIndex = 0;
 
-  ImGui::SetNextWindowPos(ImVec2(5,70));
+  ImGui::SetNextWindowPos(ImVec2(5, 5));
   ImGui::SetNextWindowSize(ImVec2(400, 60));
   ImGui::Begin("Module Header", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
   ImGui::Text("Select Modules");
@@ -322,8 +322,8 @@ void DoModuleWindow(GUIData & guiData)
 
   ImGui::End();
 
-  ImGui::SetNextWindowPos(ImVec2(5, 135));
-  ImGui::SetNextWindowSize(ImVec2(400, 505));
+  ImGui::SetNextWindowPos(ImVec2(5, 70));
+  ImGui::SetNextWindowSize(ImVec2(400, 570));
   ImGui::Begin("Modules", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
 
   for (auto const & mkv : g_GameData.modules)
@@ -384,8 +384,8 @@ void DoSystemWindow(GUIData &guiData)
 {
   static int startSystem = 0;
    
-  ImGui::SetNextWindowPos(ImVec2(5, 5));
-  ImGui::SetNextWindowSize(ImVec2(320, 60));
+  ImGui::SetNextWindowPos(ImVec2(839, 5));
+  ImGui::SetNextWindowSize(ImVec2(350, 60));
   ImGui::Begin("Systems", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
   ImGui::Text("Choose a start system");
   ImGui::Spacing();
@@ -398,8 +398,8 @@ void DoSystemWindow(GUIData &guiData)
 
 void DoOutputWindow(GUIData & guiData)
 {
-  ImGui::SetNextWindowPos(ImVec2(839, 5));
-  ImGui::SetNextWindowSize(ImVec2(350, 635));
+  ImGui::SetNextWindowPos(ImVec2(839, 70));
+  ImGui::SetNextWindowSize(ImVec2(350, 570));
   ImGui::Begin("Output", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
   
   ImGui::PushID(1);
@@ -432,7 +432,7 @@ void DoOutputWindow(GUIData & guiData)
   ImGui::PopStyleColor(3);
   ImGui::PopID();
 
-  ImGui::SetCursorPos(ImVec2(90, 580));
+  ImGui::SetCursorPos(ImVec2(90, 520));
   if (ImGui::Button("Clear##Output", ImVec2(120, 25)))
   {
     buf[0] = 0;
