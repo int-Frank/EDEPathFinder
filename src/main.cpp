@@ -415,11 +415,25 @@ void DoOutputWindow(GUIData & guiData)
   ImGui::Begin("Output buttons", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar);
 
   ImGui::Spacing();
+
+  if (ImGui::Button("Clear##Output", ImVec2(100, 25)))
+  {
+    buf[0] = 0;
+  }
+
+  ImGui::SameLine();
+
+  if (ImGui::Button("Save##Output", ImVec2(100, 25)))
+  {
+    ImGui::OpenPopup("Save to file");
+  }
+
   ImGui::PushID(1);
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(0, 200, 0)));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(ImColor(0, 225, 0)));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(ImColor(0, 255, 0)));
-  if (ImGui::Button("Run!", ImVec2(50, 25)))
+  ImGui::SameLine(ImGui::GetWindowWidth() - 70);
+  if (ImGui::Button("Run!", ImVec2(60, 25)))
   {
     std::vector<SystemNode> path;
     if (!FindBestRoute(path))
@@ -442,20 +456,6 @@ void DoOutputWindow(GUIData & guiData)
   }
   ImGui::PopStyleColor(3);
   ImGui::PopID();
-
-  ImGui::SameLine(ImGui::GetWindowWidth() - 220);
-
-  if (ImGui::Button("Clear##Output", ImVec2(100, 25)))
-  {
-    buf[0] = 0;
-  }
-
-  ImGui::SameLine(ImGui::GetWindowWidth() - 110);
-
-  if (ImGui::Button("Save##Output", ImVec2(100, 25)))
-  {
-    ImGui::OpenPopup("Save to file");
-  }
 
   if (ImGui::BeginPopupModal("Save to file", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
   {
