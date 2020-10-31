@@ -1,6 +1,21 @@
 EDE Path Finder
 
 =======
+v 1.2.0
+=======
+
+# New Features
+
+- Added ability to set the grade you wish to upgrade a component
+- Added priorities modules
+- Users can now add/edit Systems, Engineers and Modules in the .json file
+- UI tweaks
+
+# Removed Features
+
+- Removed priorities from engineers (moved to modules)
+
+=======
 v 1.0.1
 =======
 
