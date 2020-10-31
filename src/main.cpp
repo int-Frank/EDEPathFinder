@@ -22,6 +22,14 @@
 
 #define DATA_FILE_PATH L"./EDEPaths.json"
 
+#define VERSION_MAJOR     1
+#define VERSION_MINOR     2
+#define VERSION_REVISION  0
+
+#define QUOTE(str) #str
+#define EXPAND_AND_QUOTE(major, minor, rev) QUOTE(major) "." QUOTE(minor) "." QUOTE(rev)
+#define STRING_VERSION EXPAND_AND_QUOTE(VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION)
+
 struct Default
 {
   static int const windowWidth = 1194;
@@ -152,10 +160,10 @@ bool Init()
     Alert("ERROR: %s", SDL_GetError());
     return false;
   }
-
+  
   // Setup window
   SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_ALLOW_HIGHDPI);
-  g_pWindow = SDL_CreateWindow("ED Engineer Path Finder", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Default::windowWidth, Default::windowHeight, window_flags);
+  g_pWindow = SDL_CreateWindow("ED Engineer Path Finder " STRING_VERSION, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Default::windowWidth, Default::windowHeight, window_flags);
   SDL_SysWMinfo wmInfo;
   SDL_VERSION(&wmInfo.version);
   SDL_GetWindowWMInfo(g_pWindow, &wmInfo);
