@@ -1,419 +1,449 @@
 
-#include <cstring>
+#include <fstream>
 
 #include "GameData.h"
 
-#undef ITEM1
-#define ITEM1(a) #a,
-
-static char const * s_Region[SystemCOUNT] =
-{
-  UNROLL_REGIONS
-};
-
-static char const * s_ModuleClass[ModuleClassCOUNT] =
-{
-  UNROLL_MODULECLASSES
-};
-
-#undef ITEM2
-#undef ITEM3
-#define ITEM2(a, c) #a,
-#define ITEM3(a, c, str) str,
-
-static char const * s_ModuleName[ModuleCOUNT] =
-{
-  UNROLL_MODULES
-};
-
-static char const * s_EngineerName[EngineerCOUNT] =
-{
-  UNROLL_ENGINEERS
-};
-
-static char const * s_SystemName[SystemCOUNT] =
-{
-  UNROLL_SYSTEMS
-};
-
 GameData g_GameData;
 
+static std::vector<std::string> errorMessages = {};
+
+#define PUSH_ERROR_MESSAGE(str, ...) do {char _buf[256] = {}; sprintf(_buf, str, __VA_ARGS__); errorMessages.push_back(std::string(_buf));} while (false)
+#define KILL(str, ...) do { PUSH_ERROR_MESSAGE(str, __VA_ARGS__); return false;} while (false)
+
+#define GET_NEXT(c) do {if (!ifs.get(c).good()) KILL("GET_NEXT failed to read a character");} while (false)
+#define GET_NEXT_IGNORE_WS(c) do {ifs >> std::ws >> c; if (!ifs.good()) KILL("GET_NEXT_IGNORE_WS failed to read a character");} while (false)
+#define CHECK(fn) do {if (!fn) KILL(#fn " failed" );} while(false)
+#define PEEK(c) do {ifs >> std::ws; int intChar = ifs.peek(); if (intChar == EOF) KILL("PEEK failed to read a character"); c = char(intChar);} while (false)
+#define ASSERT_NEXT(c)      do {char _tempChar = 0; PEEK(_tempChar); if (_tempChar != c) KILL("Invalid token. Expected '%c' got '%c'", c, _tempChar); if (!ifs.good()) KILL("ASSERT_NEXT failed to read character."); GET_NEXT_IGNORE_WS(_tempChar);} while (false)
+#define DISCARD_NEXT_IF(c)  do {char _tempChar = 0; PEEK(_tempChar); if (_tempChar == c) GET_NEXT_IGNORE_WS(_tempChar);} while (false)
+#define BREAK_ON(c) {char _tempChar = 0; PEEK(_tempChar); if (_tempChar == c) {GET_NEXT_IGNORE_WS(_tempChar); break;}}
+#define READ_NUMBER(x) do {ifs >> x; if (!ifs.good()) KILL("Failed to read a number");} while (false)
+
 GameData::GameData()
-  : selectedEngineers(0)
-  , selectedModules(0)
-  , engineerPriorities{}
-  , startSystem(sShinrartaDezhra)
-  , engineer{}
-  , system{}
 {
-  for (uint32_t i = 0; i < EngineerCOUNT; i++)
-    engineerPriorities[i] = uint8_t(1);
-
-  //--------------------------------------------------------------------
-  // Engineers
-  engineer[eElviraMartuuk].system = sKhun;
-  engineer[eElviraMartuuk].moduleGrade[mFrameShiftDrive] = 5;
-  engineer[eElviraMartuuk].moduleGrade[mShieldGenerator] = 3;
-  engineer[eElviraMartuuk].moduleGrade[mThrusters] = 2;
-  engineer[eElviraMartuuk].moduleGrade[mShieldCellBank] = 1;
-
-  engineer[eTheDweller].system = sWyrd;
-  engineer[eTheDweller].moduleGrade[mPowerDistributor] = 5;
-  engineer[eTheDweller].moduleGrade[mPulseLaser] = 4;
-  engineer[eTheDweller].moduleGrade[mBurstLaser] = 3;
-  engineer[eTheDweller].moduleGrade[mBeamLaser] = 3;
-
-  engineer[eFelicityFarseer].system = sDeciat;
-  engineer[eFelicityFarseer].moduleGrade[mFrameShiftDrive] = 5;
-  engineer[eFelicityFarseer].moduleGrade[mThrusters] = 3;
-  engineer[eFelicityFarseer].moduleGrade[mSensors] = 3;
-  engineer[eFelicityFarseer].moduleGrade[mDetailedSurfaceScanner] = 3;
-  engineer[eFelicityFarseer].moduleGrade[mShieldBooster] = 1;
-  engineer[eFelicityFarseer].moduleGrade[mFSDInterdictor] = 1;
-  engineer[eFelicityFarseer].moduleGrade[mPowerPlant] = 1;
-
-  engineer[eTodMcquinn].system = sWolf397;
-  engineer[eTodMcquinn].moduleGrade[mMultiCannon] = 5;
-  engineer[eTodMcquinn].moduleGrade[mRailGun] = 5;
-  engineer[eTodMcquinn].moduleGrade[mFragmentCannon] = 3;
-  engineer[eTodMcquinn].moduleGrade[mCannon] = 2;
-
-  engineer[eLizRyder].system = sEurybia;
-  engineer[eLizRyder].moduleGrade[mSeekerMissileRack] = 5;
-  engineer[eLizRyder].moduleGrade[mTorpedoPylon] = 5;
-  engineer[eLizRyder].moduleGrade[mMissileRack] = 5;
-  engineer[eLizRyder].moduleGrade[mMineLauncher] = 3;
-  engineer[eLizRyder].moduleGrade[mHullReinforcementPackage] = 1;
-  engineer[eLizRyder].moduleGrade[mArmour] = 1;
-
-  engineer[eMelBrandon].system = sLuchtaine;
-  engineer[eMelBrandon].moduleGrade[mFrameShiftDrive] = 5;
-  engineer[eMelBrandon].moduleGrade[mThrusters] = 5;
-  engineer[eMelBrandon].moduleGrade[mShieldGenerator] = 5;
-  engineer[eMelBrandon].moduleGrade[mBurstLaser] = 5;
-  engineer[eMelBrandon].moduleGrade[mPulseLaser] = 5;
-  engineer[eMelBrandon].moduleGrade[mBeamLaser] = 5;
-  engineer[eMelBrandon].moduleGrade[mFSDInterdictor] = 5;
-  engineer[eMelBrandon].moduleGrade[mShieldBooster] = 5;
-  engineer[eMelBrandon].moduleGrade[mShieldCellBank] = 4;
-
-  engineer[eMashaHicks].system = sTir;
-  engineer[eMashaHicks].moduleGrade[mCollectorLimpetColtroller] = 5;
-  engineer[eMashaHicks].moduleGrade[mProspectorLimpetController] = 5;
-  engineer[eMashaHicks].moduleGrade[mRefinery] = 5;
-  engineer[eMashaHicks].moduleGrade[mFuelScoop] = 5;
-  engineer[eMashaHicks].moduleGrade[mMultiCannon] = 5;
-  engineer[eMashaHicks].moduleGrade[mFuelTransferLimpetController] = 4;
-  engineer[eMashaHicks].moduleGrade[mHatchBreakerLimpetController] = 4;
-  engineer[eMashaHicks].moduleGrade[mCannon] = 4;
-  engineer[eMashaHicks].moduleGrade[mFragmentCannon] = 4;
-
-  engineer[eJuriIshmaak].system = sGiryak;
-  engineer[eJuriIshmaak].moduleGrade[mMineLauncher] = 5;
-  engineer[eJuriIshmaak].moduleGrade[mSensors] = 5;
-  engineer[eJuriIshmaak].moduleGrade[mDetailedSurfaceScanner] = 5;
-  engineer[eJuriIshmaak].moduleGrade[mTorpedoPylon] = 3;
-  engineer[eJuriIshmaak].moduleGrade[mSeekerMissileRack] = 3;
-  engineer[eJuriIshmaak].moduleGrade[mMissileRack] = 3;
-  engineer[eJuriIshmaak].moduleGrade[mManifestScanner] = 3;
-  engineer[eJuriIshmaak].moduleGrade[mFrameShiftWakeScanner] = 3;
-  engineer[eJuriIshmaak].moduleGrade[mKillWarrentScanner] = 3;
-
-  engineer[ePetraOlmanova].system = sAsura;
-  engineer[ePetraOlmanova].moduleGrade[mHullReinforcementPackage] = 5;
-  engineer[ePetraOlmanova].moduleGrade[mSeekerMissileRack] = 5;
-  engineer[ePetraOlmanova].moduleGrade[mArmour] = 5;
-  engineer[ePetraOlmanova].moduleGrade[mMissileRack] = 5;
-  engineer[ePetraOlmanova].moduleGrade[mHeatSinkLauncher] = 5;
-  engineer[ePetraOlmanova].moduleGrade[mPointDefence] = 5;
-  engineer[ePetraOlmanova].moduleGrade[mMineLauncher] = 4;
-  engineer[ePetraOlmanova].moduleGrade[mTorpedoPylon] = 4;
-  engineer[ePetraOlmanova].moduleGrade[mChaffLauncher] = 4;
-  engineer[ePetraOlmanova].moduleGrade[mElectronicCounterMeasures] = 4;
-  engineer[ePetraOlmanova].moduleGrade[mAutoFieldMaintenanceUnit] = 4;
-
-  engineer[eEtienneDorn].system = sLos;
-  engineer[eEtienneDorn].moduleGrade[mPlasmaAccelerator] = 5;
-  engineer[eEtienneDorn].moduleGrade[mSensors] = 5;
-  engineer[eEtienneDorn].moduleGrade[mLifeSupport] = 5;
-  engineer[eEtienneDorn].moduleGrade[mPowerPlant] = 5;
-  engineer[eEtienneDorn].moduleGrade[mPowerDistributor] = 5;
-  engineer[eEtienneDorn].moduleGrade[mFrameShiftWakeScanner] = 5;
-  engineer[eEtienneDorn].moduleGrade[mRailGun] = 5;
-  engineer[eEtienneDorn].moduleGrade[mDetailedSurfaceScanner] = 4;
-  engineer[eEtienneDorn].moduleGrade[mKillWarrentScanner] = 4;
-  engineer[eEtienneDorn].moduleGrade[mManifestScanner] = 4;
-
-  engineer[eZacariahNemo].system = sYoru;
-  engineer[eZacariahNemo].moduleGrade[mFragmentCannon] = 5;
-  engineer[eZacariahNemo].moduleGrade[mMultiCannon] = 3;
-  engineer[eZacariahNemo].moduleGrade[mPlasmaAccelerator] = 2;
-
-  engineer[eLeiChung].system = sLaksak;
-  engineer[eLeiChung].moduleGrade[mShieldGenerator] = 5;
-  engineer[eLeiChung].moduleGrade[mSensors] = 5;
-  engineer[eLeiChung].moduleGrade[mDetailedSurfaceScanner] = 5;
-  engineer[eLeiChung].moduleGrade[mShieldBooster] = 3;
-
-  engineer[eColonelBrisDecker].system = sSol;
-  engineer[eColonelBrisDecker].moduleGrade[mFSDInterdictor] = 4;
-  engineer[eColonelBrisDecker].moduleGrade[mFrameShiftDrive] = 4;
-
-  engineer[eSeleneJean].system = sKuk;
-  engineer[eSeleneJean].moduleGrade[mHullReinforcementPackage] = 5;
-  engineer[eSeleneJean].moduleGrade[mArmour] = 5;
-
-  engineer[eHeraTani].system = sKuwemaki;
-  engineer[eHeraTani].moduleGrade[mPowerPlant] = 5;
-  engineer[eHeraTani].moduleGrade[mDetailedSurfaceScanner] = 5;
-  engineer[eHeraTani].moduleGrade[mSensors] = 3;
-  engineer[eHeraTani].moduleGrade[mPowerDistributor] = 3;
-
-  engineer[eMarcoQwent].system = sSirius;
-  engineer[eMarcoQwent].moduleGrade[mPowerPlant] = 4;
-  engineer[eMarcoQwent].moduleGrade[mPowerDistributor] = 3;
-
-  engineer[eRamTah].system = sMeene;
-  engineer[eRamTah].moduleGrade[mElectronicCounterMeasures] = 5;
-  engineer[eRamTah].moduleGrade[mPointDefence] = 5;
-  engineer[eRamTah].moduleGrade[mHeatSinkLauncher] = 5;
-  engineer[eRamTah].moduleGrade[mChaffLauncher] = 5;
-  engineer[eRamTah].moduleGrade[mCollectorLimpetColtroller] = 4;
-  engineer[eRamTah].moduleGrade[mFuelTransferLimpetController] = 4;
-  engineer[eRamTah].moduleGrade[mProspectorLimpetController] = 4;
-  engineer[eRamTah].moduleGrade[mHatchBreakerLimpetController] = 3;
-
-  engineer[eTheSarge].system = sBeta3Tucani;
-  engineer[eTheSarge].moduleGrade[mCollectorLimpetColtroller] = 5;
-  engineer[eTheSarge].moduleGrade[mFuelTransferLimpetController] = 5;
-  engineer[eTheSarge].moduleGrade[mHatchBreakerLimpetController] = 5;
-  engineer[eTheSarge].moduleGrade[mProspectorLimpetController] = 5;
-  engineer[eTheSarge].moduleGrade[mCannon] = 5;
-  engineer[eTheSarge].moduleGrade[mRailGun] = 3;
-
-  engineer[eDidiVatermann].system = sLeesti;
-  engineer[eDidiVatermann].moduleGrade[mShieldBooster] = 5;
-  engineer[eDidiVatermann].moduleGrade[mShieldGenerator] = 3;
-
-  engineer[eBrooTarquin].system = sMuang;
-  engineer[eBrooTarquin].moduleGrade[mBurstLaser] = 5;
-  engineer[eBrooTarquin].moduleGrade[mPulseLaser] = 5;
-  engineer[eBrooTarquin].moduleGrade[mBeamLaser] = 5;
-
-  engineer[eProfessorPalin].system = sArque;
-  engineer[eProfessorPalin].moduleGrade[mThrusters] = 5;
-  engineer[eProfessorPalin].moduleGrade[mFrameShiftDrive] = 3;
-
-  engineer[eLoriJameson].system = sShinrartaDezhra;
-  engineer[eLoriJameson].moduleGrade[mSensors] = 5;
-  engineer[eLoriJameson].moduleGrade[mDetailedSurfaceScanner] = 5;
-  engineer[eLoriJameson].moduleGrade[mRefinery] = 4;
-  engineer[eLoriJameson].moduleGrade[mFuelScoop] = 4;
-  engineer[eLoriJameson].moduleGrade[mAutoFieldMaintenanceUnit] = 4;
-  engineer[eLoriJameson].moduleGrade[mLifeSupport] = 4;
-  engineer[eLoriJameson].moduleGrade[mFrameShiftWakeScanner] = 3;
-  engineer[eLoriJameson].moduleGrade[mKillWarrentScanner] = 3;
-  engineer[eLoriJameson].moduleGrade[mManifestScanner] = 3;
-  engineer[eLoriJameson].moduleGrade[mShieldCellBank] = 3;
-
-  engineer[eChloeSedesi].system = sShenve;
-  engineer[eChloeSedesi].moduleGrade[mThrusters] = 5;
-  engineer[eChloeSedesi].moduleGrade[mFrameShiftDrive] = 3;
-
-  engineer[eBillTurner].system = sAlioth;
-  engineer[eBillTurner].moduleGrade[mPlasmaAccelerator] = 5;
-  engineer[eBillTurner].moduleGrade[mSensors] = 5;
-  engineer[eBillTurner].moduleGrade[mDetailedSurfaceScanner] = 5;
-  engineer[eBillTurner].moduleGrade[mLifeSupport] = 3;
-  engineer[eBillTurner].moduleGrade[mRefinery] = 3;
-  engineer[eBillTurner].moduleGrade[mAutoFieldMaintenanceUnit] = 3;
-  engineer[eBillTurner].moduleGrade[mFuelScoop] = 3;
-  engineer[eBillTurner].moduleGrade[mFrameShiftDrive] = 3;
-  engineer[eBillTurner].moduleGrade[mKillWarrentScanner] = 3;
-  engineer[eBillTurner].moduleGrade[mManifestScanner] = 3;
-
-  engineer[eTianaFortune].system = sAchenar;
-  engineer[eTianaFortune].moduleGrade[mFrameShiftWakeScanner] = 5;
-  engineer[eTianaFortune].moduleGrade[mKillWarrentScanner] = 5;
-  engineer[eTianaFortune].moduleGrade[mManifestScanner] = 5;
-  engineer[eTianaFortune].moduleGrade[mCollectorLimpetColtroller] = 5;
-  engineer[eTianaFortune].moduleGrade[mFuelTransferLimpetController] = 5;
-  engineer[eTianaFortune].moduleGrade[mHatchBreakerLimpetController] = 5;
-  engineer[eTianaFortune].moduleGrade[mProspectorLimpetController] = 5;
-  engineer[eTianaFortune].moduleGrade[mSensors] = 5;
-  engineer[eTianaFortune].moduleGrade[mFSDInterdictor] = 3;
-  engineer[eTianaFortune].moduleGrade[mDetailedSurfaceScanner] = 3;
-
-  //--------------------------------------------------------------------
-  // Systems
-  system[sKhun].position.Set(-171.59375f, 19.96875f, -56.96875f);
-  system[sWyrd].position.Set(-11.625f, 31.53125f, -3.9375f);
-  system[sDeciat].position.Set(122.625f, -0.8125f, -47.28125f);
-  system[sWolf397].position.Set(40.0f, 79.21875f, -10.40625f);
-  system[sEurybia].position.Set(51.40625f, -54.40625f, -30.5f);
-  system[sLuchtaine].position.Set(-9523.3125f, -914.46875f, 19825.90625);
-  system[sTir].position.Set(-9532.9375f, -923.4375f, 19799.125);
-  system[sGiryak].position.Set(14.6875f, 27.65625f, 108.65625);
-  system[sAsura].position.Set(-9550.28125f, -916.65625f, 19816.1875);
-  system[sLos].position.Set(-9509.34375f, -886.3125f, 19820.125);
-  system[sYoru].position.Set(97.875f, -86.90625f, 64.125);
-  system[sLaksak].position.Set(-21.53125f, -6.3125f, 116.03125);
-  system[sSol].position.Set(0.0f, 0.0f, 0.0f);
-  system[sKuk].position.Set(-21.28125f, 69.09375f, -16.3125);
-  system[sKuwemaki].position.Set(134.65625f, -226.90625f, -7.8125);
-  system[sSirius].position.Set(6.25f, -1.28125f, -5.75);
-  system[sMeene].position.Set(118.78125f, -56.4375f, -97.1875);
-  system[sBeta3Tucani].position.Set(32.25f, -55.1875f, 23.875);
-  system[sLeesti].position.Set(72.75f, 48.75f, 68.25);
-  system[sMuang].position.Set(17.03125f, -172.78125f, -3.46875);
-  system[sArque].position.Set(66.5f, 38.0625f, 61.125);
-  system[sShinrartaDezhra].position.Set(55.71875f, 17.59375f, 27.15625);
-  system[sShenve].position.Set(351.96875f, -373.46875f, -711.09375);
-  system[sAlioth].position.Set(-33.65625f, 72.46875f, -20.65625);
-  system[sAchenar].position.Set(67.5f, -119.46875f, 24.84375);
+  
 }
 
-ModuleClass GetModuleClass(ModuleName name)
+std::string GameData::GetEngineer(std::string const & system) const
 {
-  static ModuleClass moduleClass[ModuleCOUNT] = 
+  for (auto const & kv : engineers)
   {
-#undef ITEM2
-#undef ITEM3
-#define ITEM2(a, c) mc##c,
-#define ITEM3(a, c, str) mc##c,
+    if (kv.second.system == system)
+      return kv.first;
+  }
+  return "";
+}
 
-    UNROLL_MODULES
+bool ReadString(std::ifstream & ifs, std::string & str)
+{
+  str.clear();
+  char c = 0;
+
+  ASSERT_NEXT('\"');
+
+  while (true)
+  {
+    GET_NEXT(c);
+    if (c == '\"')
+      break;
+
+    if (c == '\\')
+      GET_NEXT(c);
+
+    str.push_back(c);
+  }
+  return true;
+}
+
+bool ReadFloat3(std::ifstream & ifs, Float3 & v)
+{
+  char c = 0;
+
+  ASSERT_NEXT('[');
+
+  ifs >> v[0] >> c >> v[1] >> c >> v[2] >> c;
+
+  return (ifs.good() && c == ']');
+}
+
+bool DiscardObject(std::ifstream & ifs)
+{
+  char c = 0;
+  int level = 0;
+  do
+  {
+    GET_NEXT_IGNORE_WS(c);
+
+    if (c == '{')
+      level++;
+    else if (c == '}')
+      level--;
+
+  } while (level != 0);
+
+  return true;
+}
+
+bool DiscardList(std::ifstream & ifs)
+{
+  char c = 0;
+  do
+  {
+    GET_NEXT_IGNORE_WS(c);
+  } while (c != ']');
+
+  return true;
+}
+
+bool DiscardNextObject(std::ifstream & ifs)
+{
+  char c = 0;
+  std::string str;
+
+  PEEK(c);
+  if (c == '[')
+    CHECK(DiscardList(ifs));
+  else if (c == '{')
+    CHECK(DiscardObject(ifs));
+  else if (c == '"')
+    CHECK(ReadString(ifs, str));
+  else
+    return false;
+
+  return true;
+}
+
+bool ReadSystem(std::ifstream & ifs, std::string & name, SystemData & data)
+{
+  ASSERT_NEXT('{');
+
+  while (true)
+  {
+    BREAK_ON('}');
+
+    std::string str;
+    CHECK(ReadString(ifs, str));
+    ASSERT_NEXT(':');
+
+    if (str == "name")
+    {
+      CHECK(ReadString(ifs, name));
+    }
+    else if (str == "position")
+    {
+      CHECK(ReadFloat3(ifs, data.position));
+    }
+    else
+    {
+      PUSH_ERROR_MESSAGE("WARNING: Unknown tag found when reading a system: '%s'", str.c_str());
+      DiscardNextObject(ifs);
+    }
+
+    DISCARD_NEXT_IF(',');
   };
 
-  return moduleClass[name];
+  return true;
 }
 
-SystemName GetSystem(EngineerName name)
+bool ReadSystems(std::ifstream & ifs, SystemMap & systemMap)
 {
-  static SystemName system[EngineerCOUNT] =
-  {
-#undef ITEM2
-#undef ITEM3
-#define ITEM2(a, sys) s##sys,
-#define ITEM3(a, sys, str) s##sys,
+  ASSERT_NEXT('[');
 
-    UNROLL_ENGINEERS
+  while (true)
+  {
+    BREAK_ON(']');
+
+    SystemData data ={};
+    std::string name;
+    CHECK(ReadSystem(ifs, name, data));
+
+    if (systemMap.find(name) != systemMap.end())
+      PUSH_ERROR_MESSAGE("WARNING: Duplicate system found: '%s'", name.c_str());
+    else
+      systemMap[name] = data;
+
+    DISCARD_NEXT_IF(',');
+  }
+
+  return true;
+}
+
+bool ReadModule(std::ifstream & ifs, std::string & name, ModuleData & data)
+{
+  ASSERT_NEXT('{');
+
+  while (true)
+  {
+    BREAK_ON('}');
+
+    std::string str;
+    CHECK(ReadString(ifs, str));
+    ASSERT_NEXT(':');
+
+    if (str == "name")
+    {
+      CHECK(ReadString(ifs, name));
+    }
+    else if (str == "class")
+    {
+      CHECK(ReadString(ifs, data.Class));
+    }
+    else
+    {
+      PUSH_ERROR_MESSAGE("WARNING: Unknown tag found when reading a module: '%s'", str.c_str());
+      DiscardNextObject(ifs);
+    }
+
+    DISCARD_NEXT_IF(',');
   };
 
-  return system[name];
+  return true;
 }
 
-EngineerName GetEngineer(SystemName name)
+bool ReadModules(std::ifstream & ifs, ModuleMap & moduleMap)
 {
-  for (uint32_t i = 0; i < EngineerCOUNT; ++i)
+  ASSERT_NEXT('[');
+
+  while (true)
   {
-    if (GetSystem(EngineerName(i)) == name)
-      return EngineerName(i);
+    BREAK_ON(']');
+
+    ModuleData data ={};
+    std::string name;
+    CHECK(ReadModule(ifs, name, data));
+
+    if (moduleMap.find(name) != moduleMap.end())
+      PUSH_ERROR_MESSAGE("WARNING: Duplicate module found: '%s'", name.c_str());
+    else
+      moduleMap[name] = data;
+
+    DISCARD_NEXT_IF(',');
   }
-  return EngineerCOUNT; //ERROR!
+
+  return true;
 }
 
-Region GetRegion(SystemName name)
+bool ReadEngineerModule(std::ifstream & ifs, std::string & name, int & grade)
 {
-  static Region systemRegion[SystemCOUNT] =
-  {
-#undef ITEM2
-#undef ITEM3
-#define ITEM2(a, reg) r##reg,
-#define ITEM3(a, reg, str) r##reg,
+  ASSERT_NEXT('{');
 
-    UNROLL_SYSTEMS
+  while (true)
+  {
+    BREAK_ON('}');
+
+    std::string str;
+    CHECK(ReadString(ifs, str));
+    ASSERT_NEXT(':');
+
+    if (str == "name")
+    {
+      CHECK(ReadString(ifs, name));
+    }
+    else if (str == "grade")
+    {
+      int temp = -1;
+      READ_NUMBER(grade);
+      if (temp > 0 && temp <= 5)
+        grade = temp;
+    }
+    else
+    {
+      PUSH_ERROR_MESSAGE("WARNING: Unknown tag found when reading a module: '%s'", str.c_str());
+      DiscardNextObject(ifs);
+    }
+
+    DISCARD_NEXT_IF(',');
   };
 
-  return systemRegion[name];
+  return true;
 }
 
-char const * ToString(Region name)
+bool ReadEngineerModules(std::ifstream & ifs, std::vector<std::pair<std::string, int>> & modules)
 {
-  return s_Region[name];
-}
+  ASSERT_NEXT('[');
 
-char const * ToString(ModuleClass name)
-{
-  return s_ModuleClass[name];
-}
-
-char const * ToString(ModuleName name)
-{
-  return s_ModuleName[name];
-}
-
-char const * ToString(EngineerName name)
-{
-  return s_EngineerName[name];
-}
-
-char const * ToString(SystemName name)
-{
-  return s_SystemName[name];
-}
-
-bool ToRegion(char const * pStr, Region & out)
-{
-  for (uint32_t i = 0; i < RegionCOUNT; i++)
+  while (true)
   {
-    if (strcmp(pStr, s_Region[i]) == 0)
+    BREAK_ON(']');
+
+    int grade = -1;
+    std::string name;
+    CHECK(ReadEngineerModule(ifs, name, grade));
+
+    bool found = false;
+    for (auto const & kv : modules)
     {
-      out = static_cast<Region>(i);
-      return true;
+      if (kv.first == name)
+      {
+        bool found = true;
+        break;
+      }
     }
+
+    if (found)
+    {
+      PUSH_ERROR_MESSAGE("WARNING: Duplicate module grade found: '%s'", name.c_str());
+    }
+    else
+    {
+      bool inserted = false;
+      for (auto it = modules.begin(); it != modules.end(); it++)
+      {
+        if (grade >= it->second)
+        {
+          modules.insert(it, std::pair<std::string, int>(name, grade));
+          inserted = true;
+          break;
+        }
+      }
+
+      if (!inserted)
+        modules.push_back(std::pair<std::string, int>(name, grade));
+    }
+
+    DISCARD_NEXT_IF(',');
   }
-  return false;
+
+  return true;
 }
 
-bool ToModuleClass(char const * pStr, ModuleClass & out)
+bool ReadEngineer(std::ifstream & ifs, std::string & name, EngineerData & data)
 {
-  for (uint32_t i = 0; i < ModuleClassCOUNT; i++)
+  ASSERT_NEXT('{');
+
+  while (true)
   {
-    if (strcmp(pStr, s_ModuleClass[i]) == 0)
+    BREAK_ON('}');
+
+    std::string str;
+    CHECK(ReadString(ifs, str));
+    ASSERT_NEXT(':');
+
+    if (str == "name")
     {
-      out = static_cast<ModuleClass>(i);
-      return true;
+      CHECK(ReadString(ifs, name));
     }
-  }
-  return false;
+    else if (str == "system")
+    {
+      CHECK(ReadString(ifs, data.system));
+    }
+    else if (str == "class")
+    {
+      CHECK(ReadString(ifs, data.Class));
+    }
+    else if (str == "modules")
+    {
+      CHECK(ReadEngineerModules(ifs, data.moduleGrades));
+    }
+    else
+    {
+      PUSH_ERROR_MESSAGE("WARNING: Unknown tag found when reading a module: '%s'", str.c_str());
+      DiscardNextObject(ifs);
+    }
+
+    DISCARD_NEXT_IF(',');
+  };
+
+  return true;
 }
 
-bool ToModuleName(char const * pStr, ModuleName & out)
+bool ReadEngineers(std::ifstream & ifs, EngineerMap & engineerMap)
 {
-  for (uint32_t i = 0; i < ModuleCOUNT; i++)
+  ASSERT_NEXT('[');
+
+  while (true)
   {
-    if (strcmp(pStr, s_ModuleName[i]) == 0)
-    {
-      out = static_cast<ModuleName>(i);
-      return true;
-    }
+    BREAK_ON(']');
+
+    EngineerData data ={};
+    std::string name;
+    CHECK(ReadEngineer(ifs, name, data));
+
+    if (engineerMap.find(name) != engineerMap.end())
+      PUSH_ERROR_MESSAGE("WARNING: Duplicate engineer found: '%s'", name.c_str());
+    else
+      engineerMap[name] = data;
+
+    DISCARD_NEXT_IF(',');
   }
-  return false;
+
+  return true;
 }
 
-bool ToEngineerName(char const * pStr, EngineerName & out)
+bool GameData::Load(std::wstring const & filePath)
 {
-  for (uint32_t i = 0; i < EngineerCOUNT; i++)
+  // Set Defaults
+  engineerClassStr = "Region";
+  moduleClassStr = "Category";
+
+  std::ifstream ifs(filePath);
+
+  if (!ifs.good())
+    return false;
+
+  char c;
+  std::string str;
+
+  ASSERT_NEXT('{');
+
+  do
   {
-    if (strcmp(pStr, s_EngineerName[i]) == 0)
+    if (!ReadString(ifs, str))
+      return false;
+
+    ASSERT_NEXT(':');
+
+    if (str == "systems")
     {
-      out = static_cast<EngineerName>(i);
-      return true;
+      CHECK(ReadSystems(ifs, systems));
     }
+    else if (str == "engineerClassDescription")
+    {
+      CHECK(ReadString(ifs, engineerClassStr));
+    }
+    else if (str == "moduleClassDescription")
+    {
+      CHECK(ReadString(ifs, moduleClassStr));
+    }
+    else if (str == "modules")
+    {
+      CHECK(ReadModules(ifs, modules));
+    }
+    else if (str == "engineers")
+    {
+      CHECK(ReadEngineers(ifs, engineers));
+    }
+    else
+    {
+      PUSH_ERROR_MESSAGE("WARNING: Unknown tag found in root: '%s'", str.c_str());
+      CHECK(DiscardNextObject(ifs));
+    }
+
+    DISCARD_NEXT_IF(',');
+    PEEK(c);
+  } while (c != '}');
+
+  engineerClasses.clear();
+  for (auto const & kv : engineers)
+  {
+    bool found = false;
+    for (auto const & str : engineerClasses)
+    {
+      if (str == kv.second.Class)
+      {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      engineerClasses.push_back(kv.second.Class);
   }
-  return false;
+
+  return true;
 }
 
-bool ToSystemName(char const * pStr, SystemName & out)
+const std::vector<std::string> * GameData::GetParsingMessages() const
 {
-  for (uint32_t i = 0; i < SystemCOUNT; i++)
-  {
-    if (strcmp(pStr, s_SystemName[i]) == 0)
-    {
-      out = static_cast<SystemName>(i);
-      return true;
-    }
-  }
-  return false;
+  return &errorMessages;
 }

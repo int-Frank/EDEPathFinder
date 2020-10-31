@@ -1,0 +1,393 @@
+{
+  "engineerClassDescription":"Region",
+  "moduleClassDescription":"Category",
+  "systems":[
+    {"name":"Khun","position":[-171.594, 19.9688, -56.9688]},
+    {"name":"Wyrd","position":[-11.625, 31.5313, -3.9375]},
+    {"name":"Deciat","position":[122.625, -0.8125, -47.2813]},
+    {"name":"Wolf 397","position":[40, 79.2188, -10.4063]},
+    {"name":"Eurybia","position":[51.4063, -54.4063, -30.5]},
+    {"name":"Luchtaine","position":[-9523.31, -914.469, 19825.9]},
+    {"name":"Tir","position":[-9532.94, -923.438, 19799.1]},
+    {"name":"Giryak","position":[14.6875, 27.6563, 108.656]},
+    {"name":"Asura","position":[-9550.28, -916.656, 19816.2]},
+    {"name":"Los","position":[-9509.34, -886.313, 19820.1]},
+    {"name":"Yoru","position":[97.875, -86.9063, 64.125]},
+    {"name":"Laksak","position":[-21.5313, -6.3125, 116.031]},
+    {"name":"Sol","position":[0, 0, 0]},
+    {"name":"Kuk","position":[-21.2813, 69.0938, -16.3125]},
+    {"name":"Kuwemaki","position":[134.656, -226.906, -7.8125]},
+    {"name":"Sirius","position":[6.25, -1.28125, -5.75]},
+    {"name":"Meene","position":[118.781, -56.4375, -97.1875]},
+    {"name":"Beta-3 Tucani","position":[32.25, -55.1875, 23.875]},
+    {"name":"Leesti","position":[72.75, 48.75, 68.25]},
+    {"name":"Muang","position":[17.0313, -172.781, -3.46875]},
+    {"name":"Arque","position":[66.5, 38.0625, 61.125]},
+    {"name":"Shinrarta Dezhra","position":[55.7188, 17.5938, 27.1563]},
+    {"name":"Shenve","position":[351.969, -373.469, -711.094]},
+    {"name":"Alioth","position":[-33.6563, 72.4688, -20.6563]},
+    {"name":"Achenar","position":[67.5, -119.469, 24.8438]},
+    {"name":"Brestla","position":[159.46875, -103.75, -19.6875]},
+  ],
+  "modules":[
+    {"name":"Armour","class":"Core"},
+    {"name":"Power Plant","class":"Core"},
+    {"name":"Thrusters","class":"Core"},
+    {"name":"Frame Shift Drive","class":"Core"},
+    {"name":"Life Support","class":"Core"},
+    {"name":"Power Distributor","class":"Core"},
+    {"name":"Sensors","class":"Core"},
+    {"name":"Shield Generator","class":"Optional"},
+    {"name":"Frame Shift Drive Interdictor","class":"Optional"},
+    {"name":"Shield Cell Bank","class":"Optional"},
+    {"name":"Collector Limpet Controller","class":"Optional"},
+    {"name":"Prospector Limpet Controller","class":"Optional"},
+    {"name":"Fuel Transfer Limpet Controller","class":"Optional"},
+    {"name":"Hatch Breaker Limpet Controller","class":"Optional"},
+    {"name":"Auto Field-Maintenance Unit","class":"Optional"},
+    {"name":"Refinery","class":"Optional"},
+    {"name":"Fuel Scoop","class":"Optional"},
+    {"name":"Detailed Surface Scanner","class":"Optional"},
+    {"name":"Hull Reinforcement Package","class":"Optional"},
+    {"name":"Burst Laser","class":"Weapon"},
+    {"name":"Pulse Laser","class":"Weapon"},
+    {"name":"Beam Laser","class":"Weapon"},
+    {"name":"Multi-Cannon","class":"Weapon"},
+    {"name":"Rail Gun","class":"Weapon"},
+    {"name":"Fragment Cannon","class":"Weapon"},
+    {"name":"Mine Launcher","class":"Weapon"},
+    {"name":"Cannon","class":"Weapon"},
+    {"name":"Plasma Accelerator","class":"Weapon"},
+    {"name":"Seeker Missile Rack","class":"Weapon"},
+    {"name":"Torpedo Pylon","class":"Weapon"},
+    {"name":"Missile Rack","class":"Weapon"},
+    {"name":"Frame Shift Wake Scanner","class":"Utility"},
+    {"name":"Kill Warrent Scanner","class":"Utility"},
+    {"name":"Manifest Scanner","class":"Utility"},
+    {"name":"Heat Sink Launcher","class":"Utility"},
+    {"name":"Electronic Counter Measures","class":"Utility"},
+    {"name":"Point Defence","class":"Utility"},
+    {"name":"Chaff Launcher","class":"Utility"},
+    {"name":"Shiled Booster","class":"Utility"}
+  ],
+  "engineers":[
+    {
+      "name":"Elvira Martuuk",
+      "system": "Khun",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Thrusters","grade":2},
+        {"name":"Frame Shift Drive","grade":5},
+        {"name":"Shield Generator","grade":3},
+        {"name":"Shield Cell Bank","grade":1}
+      ]
+    },
+    {
+      "name":"The Dweller",
+      "system":"Wyrd",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Power Distributor","grade":5},
+        {"name":"Burst Laser","grade":3},
+        {"name":"Pulse Laser","grade":4},
+        {"name":"Beam Laser","grade":3}
+      ]
+    },
+    {
+      "name":"Felicity Farseer",
+      "system":"Deciat",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Power Plant","grade":1},
+        {"name":"Thrusters","grade":3},
+        {"name":"Frame Shift Drive","grade":5},
+        {"name":"Sensors","grade":3},
+        {"name":"Frame Shift Drive Interdictor","grade":1},
+        {"name":"Detailed Surface Scanner","grade":3},
+        {"name":"Shiled Booster","grade":1}
+      ]
+    },
+    {
+      "name":"Tod \"The Blaster\" Mcquinn",
+      "system":"Wolf 397",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Multi-Cannon","grade":5},
+        {"name":"Rail Gun","grade":5},
+        {"name":"Fragment Cannon","grade":3},
+        {"name":"Cannon","grade":2}
+      ]
+    },
+    {
+      "name":"Liz Ryder",
+      "system":"Eurybia",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Armour","grade":1},
+        {"name":"Hull Reinforcement Package","grade":1},
+        {"name":"Mine Launcher","grade":3},
+        {"name":"Seeker Missile Rack","grade":5},
+        {"name":"Torpedo Pylon","grade":5},
+        {"name":"Missile Rack","grade":5}
+      ]
+    },
+    {
+      "name":"Mel Brandon",
+      "system":"Luchtaine",
+      "class": "Colonia",
+      "modules":[
+        {"name":"Thrusters","grade":5},
+        {"name":"Frame Shift Drive","grade":5},
+        {"name":"Shield Generator","grade":5},
+        {"name":"Frame Shift Drive Interdictor","grade":5},
+        {"name":"Shield Cell Bank","grade":4},
+        {"name":"Burst Laser","grade":5},
+        {"name":"Pulse Laser","grade":5},
+        {"name":"Beam Laser","grade":5},
+        {"name":"Shiled Booster","grade":5}
+      ]
+    },
+    {
+      "name":"Masha Hicks",
+      "system":"Tir",
+      "class": "Colonia",
+      "modules":[
+        {"name":"Collector Limpet Controller","grade":5},
+        {"name":"Prospector Limpet Controller","grade":5},
+        {"name":"Fuel Transfer Limpet Controller","grade":4},
+        {"name":"Hatch Breaker Limpet Controller","grade":4},
+        {"name":"Refinery","grade":5},
+        {"name":"Fuel Scoop","grade":5},
+        {"name":"Multi-Cannon","grade":5},
+        {"name":"Fragment Cannon","grade":4},
+        {"name":"Cannon","grade":4}
+      ]
+    },
+    {
+      "name":"Juri Ishmaak",
+      "system":"Giryak",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Sensors","grade":5},
+        {"name":"Detailed Surface Scanner","grade":5},
+        {"name":"Mine Launcher","grade":5},
+        {"name":"Seeker Missile Rack","grade":3},
+        {"name":"Torpedo Pylon","grade":3},
+        {"name":"Missile Rack","grade":3},
+        {"name":"Frame Shift Wake Scanner","grade":3},
+        {"name":"Kill Warrent Scanner","grade":3},
+        {"name":"Manifest Scanner","grade":3}
+      ]
+    },
+    {
+      "name":"Petra Olmanova",
+      "system":"Asura",
+      "class": "Colonia",
+      "modules":[
+        {"name":"Armour","grade":5},
+        {"name":"Auto Field-Maintenance Unit","grade":4},
+        {"name":"Hull Reinforcement Package","grade":5},
+        {"name":"Mine Launcher","grade":4},
+        {"name":"Seeker Missile Rack","grade":5},
+        {"name":"Torpedo Pylon","grade":4},
+        {"name":"Missile Rack","grade":5},
+        {"name":"Heat Sink Launcher","grade":5},
+        {"name":"Electronic Counter Measures","grade":4},
+        {"name":"Point Defence","grade":5},
+        {"name":"Chaff Launcher","grade":4}
+      ]
+    },
+    {
+      "name":"Etienne Dorn",
+      "system":"Los",
+      "class": "Colonia",
+      "modules":[
+        {"name":"Power Plant","grade":5},
+        {"name":"Life Support","grade":5},
+        {"name":"Power Distributor","grade":5},
+        {"name":"Sensors","grade":5},
+        {"name":"Detailed Surface Scanner","grade":4},
+        {"name":"Rail Gun","grade":5},
+        {"name":"Plasma Accelerator","grade":5},
+        {"name":"Frame Shift Wake Scanner","grade":5},
+        {"name":"Kill Warrent Scanner","grade":4},
+        {"name":"Manifest Scanner","grade":4}
+      ]
+    },
+    {
+      "name":"Zacariah Nemo",
+      "system":"Yoru",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Multi-Cannon","grade":3},
+        {"name":"Fragment Cannon","grade":5},
+        {"name":"Plasma Accelerator","grade":2}
+      ]
+    },
+    {
+      "name":"Lei Chung",
+      "system":"Laksak",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Sensors","grade":5},
+        {"name":"Shield Generator","grade":5},
+        {"name":"Detailed Surface Scanner","grade":5},
+        {"name":"Shiled Booster","grade":3}
+      ]
+    },
+    {
+      "name":"Colonel Bris Decker",
+      "system":"Sol",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Frame Shift Drive","grade":4},
+        {"name":"Frame Shift Drive Interdictor","grade":4}
+      ]
+    },
+    {
+      "name":"Selene Jean",
+      "system":"Kuk",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Armour","grade":5},
+        {"name":"Hull Reinforcement Package","grade":5}
+      ]
+    },
+    {
+      "name":"Hera Tani",
+      "system":"Kuwemaki",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Power Plant","grade":5},
+        {"name":"Power Distributor","grade":3},
+        {"name":"Sensors","grade":3},
+        {"name":"Detailed Surface Scanner","grade":5}
+      ]
+    },
+    {
+      "name":"Marco Qwent",
+      "system":"Sirius",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Power Plant","grade":4},
+        {"name":"Power Distributor","grade":3}
+      ]
+    },
+    {
+      "name":"Ram Tah",
+      "system":"Meene",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Collector Limpet Controller","grade":4},
+        {"name":"Prospector Limpet Controller","grade":4},
+        {"name":"Fuel Transfer Limpet Controller","grade":4},
+        {"name":"Hatch Breaker Limpet Controller","grade":3},
+        {"name":"Heat Sink Launcher","grade":5},
+        {"name":"Electronic Counter Measures","grade":5},
+        {"name":"Point Defence","grade":5},
+        {"name":"Chaff Launcher","grade":5}
+      ]
+    },
+    {
+      "name":"The Sarge",
+      "system":"Beta-3 Tucani",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Collector Limpet Controller","grade":5},
+        {"name":"Prospector Limpet Controller","grade":5},
+        {"name":"Fuel Transfer Limpet Controller","grade":5},
+        {"name":"Hatch Breaker Limpet Controller","grade":5},
+        {"name":"Rail Gun","grade":3},
+        {"name":"Cannon","grade":5}
+      ]
+    },
+    {
+      "name":"Didi Vatermann",
+      "system":"Leesti",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Shield Generator","grade":3},
+        {"name":"Shiled Booster","grade":5}
+      ]
+    },
+    {
+      "name":"Broo Tarquin",
+      "system":"Muang",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Burst Laser","grade":5},
+        {"name":"Pulse Laser","grade":5},
+        {"name":"Beam Laser","grade":5}
+      ]
+    },
+    {
+      "name":"Professor Palin",
+      "system":"Arque",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Thrusters","grade":5},
+        {"name":"Frame Shift Drive","grade":3}
+      ]
+    },
+    {
+      "name":"Lori Jameson",
+      "system":"Shinrarta Dezhra",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Life Support","grade":4},
+        {"name":"Sensors","grade":5},
+        {"name":"Shield Cell Bank","grade":3},
+        {"name":"Auto Field-Maintenance Unit","grade":4},
+        {"name":"Refinery","grade":4},
+        {"name":"Fuel Scoop","grade":4},
+        {"name":"Detailed Surface Scanner","grade":5},
+        {"name":"Frame Shift Wake Scanner","grade":3},
+        {"name":"Kill Warrent Scanner","grade":3},
+        {"name":"Manifest Scanner","grade":3}
+      ]
+    },
+    {
+      "name":"Chloe Sedesi",
+      "system":"Shenve",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Thrusters","grade":5},
+        {"name":"Frame Shift Drive","grade":3}
+      ]
+    },
+    {
+      "name":"Bill Turner",
+      "system":"Alioth",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Frame Shift Drive","grade":3},
+        {"name":"Life Support","grade":3},
+        {"name":"Sensors","grade":5},
+        {"name":"Auto Field-Maintenance Unit","grade":3},
+        {"name":"Refinery","grade":3},
+        {"name":"Fuel Scoop","grade":3},
+        {"name":"Detailed Surface Scanner","grade":5},
+        {"name":"Plasma Accelerator","grade":5},
+        {"name":"Kill Warrent Scanner","grade":3},
+        {"name":"Manifest Scanner","grade":3}
+      ]
+    },
+    {
+      "name":"Tiana Fortune",
+      "system":"Achenar",
+      "class": "The Bubble",
+      "modules":[
+        {"name":"Sensors","grade":5},
+        {"name":"Frame Shift Drive Interdictor","grade":3},
+        {"name":"Collector Limpet Controller","grade":5},
+        {"name":"Prospector Limpet Controller","grade":5},
+        {"name":"Fuel Transfer Limpet Controller","grade":5},
+        {"name":"Hatch Breaker Limpet Controller","grade":5},
+        {"name":"Detailed Surface Scanner","grade":3},
+        {"name":"Frame Shift Wake Scanner","grade":5},
+        {"name":"Kill Warrent Scanner","grade":5},
+        {"name":"Manifest Scanner","grade":5}
+      ]
+    }
+  ]
+}
