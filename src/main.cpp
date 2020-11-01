@@ -193,7 +193,15 @@ bool Init()
   ImGui_ImplSDL2_InitForD3D(g_pWindow);
   ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
-  return g_GameData.Load(DATA_FILE_PATH);
+  bool loadSuccess = g_GameData.Load(DATA_FILE_PATH);
+  if (!loadSuccess)
+  {
+    std::stringstream ss;
+    for (auto const & str : *g_GameData.GetParsingMessages())
+      ss << "\n" << str;
+    Alert("Error! Failed to load data file. GameData::Load() returned the following error messages:\n%s", ss.str().c_str());
+  }
+  return loadSuccess;
 }
 
 void ShutDown()

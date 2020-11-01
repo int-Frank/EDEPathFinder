@@ -208,6 +208,7 @@ static void RecursiveFindPath(EngineerModuleMap const & engineers,
     node.modules = engineers.at(engineerName);
     currentBuild.push_back(node);
 
+    // Visit this engineer, and upgrade any modules this engineer offers
     ModifyModuleCounter(modules, engineerName, 1);
 
     ModuleItemList::iterator nextModule = FindNextValidModule(modules, currentModule);
@@ -217,6 +218,8 @@ static void RecursiveFindPath(EngineerModuleMap const & engineers,
       ProcessBuild(currentBuild, currentBest);
 
     currentBuild.pop_back();
+
+    // Unvisit this engineer, rolling back any modules we may have upgraded
     ModifyModuleCounter(modules, engineerName, -1);
   }
 }

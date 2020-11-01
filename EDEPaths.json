@@ -27,7 +27,7 @@
     {"name":"Shenve","position":[351.969, -373.469, -711.094]},
     {"name":"Alioth","position":[-33.6563, 72.4688, -20.6563]},
     {"name":"Achenar","position":[67.5, -119.469, 24.8438]},
-    {"name":"Brestla","position":[159.46875, -103.75, -19.6875]},
+    {"name":"Brestla","position":[159.46875, -103.75, -19.6875]}
   ],
   "modules":[
     {"name":"Armour","class":"Core"},
