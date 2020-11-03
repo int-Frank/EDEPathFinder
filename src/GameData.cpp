@@ -19,14 +19,9 @@ static std::vector<std::string> errorMessages = {};
 #define BREAK_ON(c) {char _tempChar = 0; PEEK(_tempChar); if (_tempChar == c) {GET_NEXT_IGNORE_WS(_tempChar); break;}}
 #define READ_NUMBER(x) do {ifs >> x; if (!ifs.good()) KILL("Failed to read a number");} while (false)
 
-GameData::GameData()
+std::string GetEngineerFromSystem(std::string const & system)
 {
-  
-}
-
-std::string GameData::GetEngineer(std::string const & system) const
-{
-  for (auto const & kv : engineers)
+  for (auto const & kv : g_GameData.engineers)
   {
     if (kv.second.system == system)
       return kv.first;
@@ -341,7 +336,7 @@ bool ReadEngineer(std::ifstream & ifs, std::string & name, EngineerData & data)
     }
     else
     {
-      PUSH_ERROR_MESSAGE("WARNING: Unknown tag found when reading a module: '%s'", str.c_str());
+      PUSH_ERROR_MESSAGE("WARNING: Unknown tag found when reading an engineer: '%s'", str.c_str());
       DiscardNextObject(ifs);
     }
 
@@ -374,11 +369,11 @@ bool ReadEngineers(std::ifstream & ifs, EngineerMap & engineerMap)
   return true;
 }
 
-bool GameData::Load(std::wstring const & filePath)
+bool LoadGameData(std::wstring const & filePath)
 {
   // Set Defaults
-  engineerClassStr = "Region";
-  moduleClassStr = "Category";
+  g_GameData.engineerClassDesc = "Region";
+  g_GameData.moduleClassDesc = "Category";
 
   std::ifstream ifs(filePath);
 
@@ -399,23 +394,23 @@ bool GameData::Load(std::wstring const & filePath)
 
     if (str == "systems")
     {
-      CHECK(ReadSystems(ifs, systems));
+      CHECK(ReadSystems(ifs, g_GameData.systems));
     }
     else if (str == "engineerClassDescription")
     {
-      CHECK(ReadString(ifs, engineerClassStr));
+      CHECK(ReadString(ifs, g_GameData.engineerClassDesc));
     }
     else if (str == "moduleClassDescription")
     {
-      CHECK(ReadString(ifs, moduleClassStr));
+      CHECK(ReadString(ifs, g_GameData.moduleClassDesc));
     }
     else if (str == "modules")
     {
-      CHECK(ReadModules(ifs, modules));
+      CHECK(ReadModules(ifs, g_GameData.modules));
     }
     else if (str == "engineers")
     {
-      CHECK(ReadEngineers(ifs, engineers));
+      CHECK(ReadEngineers(ifs, g_GameData.engineers));
     }
     else
     {
@@ -427,11 +422,11 @@ bool GameData::Load(std::wstring const & filePath)
     PEEK(c);
   } while (c != '}');
 
-  engineerClasses.clear();
-  for (auto const & kv : engineers)
+  g_GameData.engineerClasses.clear();
+  for (auto const & kv : g_GameData.engineers)
   {
     bool found = false;
-    for (auto const & str : engineerClasses)
+    for (auto const & str : g_GameData.engineerClasses)
     {
       if (str == kv.second.Class)
       {
@@ -441,13 +436,13 @@ bool GameData::Load(std::wstring const & filePath)
     }
 
     if (!found)
-      engineerClasses.push_back(kv.second.Class);
+      g_GameData.engineerClasses.push_back(kv.second.Class);
   }
 
   return true;
 }
 
-const std::vector<std::string> * GameData::GetParsingMessages() const
+const std::vector<std::string> * GetParsingMessages()
 {
   return &errorMessages;
 }

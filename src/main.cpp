@@ -79,7 +79,7 @@ void CleanupRenderTarget();
 
 void Alert(char const * format, ...)
 {
-  char buffer[1024];
+  static char buffer[4096] = {};
   va_list args;
   va_start(args, format);
   vsnprintf(buffer, 255, format, args);
@@ -193,11 +193,11 @@ bool Init()
   ImGui_ImplSDL2_InitForD3D(g_pWindow);
   ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
-  bool loadSuccess = g_GameData.Load(DATA_FILE_PATH);
+  bool loadSuccess = LoadGameData(DATA_FILE_PATH);
   if (!loadSuccess)
   {
     std::stringstream ss;
-    for (auto const & str : *g_GameData.GetParsingMessages())
+    for (auto const & str : *GetParsingMessages())
       ss << "\n" << str;
     Alert("Error! Failed to load data file. GameData::Load() returned the following error messages:\n%s", ss.str().c_str());
   }
@@ -269,8 +269,7 @@ void DoEngineersWindow(GUIData & guiData)
   ImGui::SameLine();
 
   ImGui::SetNextItemWidth(160.f);
-  if (ImGui::Combo(g_GameData.engineerClassStr.c_str(), &engineerClassIndex, guiData.ppEngineerClasses, guiData.engineerClassCount))
-    g_GameData.selectedEngineers.clear();
+  ImGui::Combo(g_GameData.engineerClassDesc.c_str(), &engineerClassIndex, guiData.ppEngineerClasses, guiData.engineerClassCount);
 
   ImGui::End();
 
@@ -336,7 +335,7 @@ void DoModuleWindow(GUIData & guiData)
 
   ImGui::SameLine();
   ImGui::SetNextItemWidth(200.f);
-  ImGui::Combo(g_GameData.moduleClassStr.c_str(), &moduleClassIndex, guiData.ppModuleClasses, guiData.moduleClassCount);
+  ImGui::Combo(g_GameData.moduleClassDesc.c_str(), &moduleClassIndex, guiData.ppModuleClasses, guiData.moduleClassCount);
 
   ImGui::End();
 
@@ -464,7 +463,7 @@ void DoOutputWindow(GUIData & guiData)
       ss << count << ": ";
 
       if (node.modules.size() != 0)
-        ss << g_GameData.GetEngineer(node.name) << ", ";
+        ss << GetEngineerFromSystem(node.name) << ", ";
 
       ss << node.name;
       for (auto const & mg : node.modules)

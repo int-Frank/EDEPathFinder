@@ -35,34 +35,29 @@ struct ModuleOptions
   int priority;
 };
 
-class GameData
+struct GameData
 {
-public:
-
   static int const MinPriority = 1;
   static int const MaxPriority = 9;
 
-  GameData();
-
-  bool Load(std::wstring const & filePath);
-  const std::vector<std::string> * GetParsingMessages() const;
-
-  std::string GetEngineer(std::string const & system) const;
-
-  std::set<std::string> selectedEngineers;
-  std::map<std::string, ModuleOptions> selectedModules;
-
-  std::string startSystem;
-
-  std::string moduleClassStr;
-  std::string engineerClassStr;
-
-  std::vector<std::string> engineerClasses;
   SystemMap systems;
   ModuleMap modules;
   EngineerMap engineers;
+
+  std::vector<std::string> engineerClasses;
+
+  std::string moduleClassDesc;
+  std::string engineerClassDesc;
+
+  std::string startSystem;
+  std::set<std::string> selectedEngineers;
+  std::map<std::string, ModuleOptions> selectedModules;
 };
 
 extern GameData g_GameData;
+
+bool LoadGameData(std::wstring const & filePath);
+const std::vector<std::string> * GetParsingMessages();
+std::string GetEngineerFromSystem(std::string const & system);
 
 #endif
