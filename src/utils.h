@@ -3,50 +3,53 @@
 
 #include <cmath>
 
-struct Float3
+template<typename T>
+struct Vector3
 {
-  Float3()
+  Vector3()
     : data{}
   {
 
   }
 
-  Float3(float x, float y, float z)
+  Vector3(T x, T y, T z)
     : data{x, y, z}
   {
 
   }
 
-  void Set(float x, float y, float z)
+  void Set(T x, T y, T z)
   {
     data[0] = x;
     data[1] = y;
     data[2] = z;
   }
 
-  float operator[](int i) const
+  T operator[](int i) const
   {
     return data[i];
   }
 
-  float & operator[](int i)
+  T & operator[](int i)
   {
     return data[i];
   }
 
-  Float3 operator-(Float3 const & other) const
+  Vector3 operator-(Vector3 const & other) const
   {
-    return Float3(data[0] - other.data[0],
-      data[1] - other.data[1],
-      data[2] - other.data[2]);
+    return Vector3(data[0] - other.data[0],
+                   data[1] - other.data[1],
+                   data[2] - other.data[2]);
   }
 
-  float Length() const
+  T Length() const
   {
     return sqrt(data[0] * data[0] + data[1] * data[1] + data[2] * data[2]);
   }
 
-  float data[3];
+  T data[3];
 };
+
+typedef Vector3<float> Float3;
 
 #endif

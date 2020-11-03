@@ -105,7 +105,7 @@ static void RemoveDeadModules(std::list<ModuleItem> & modules)
 //To find the minimum path from a point through all other points, we add 2 dummy points a, b such that:
 // a is distance 0 from the start point and inf to all others
 // b distance 0 to everything
-void SortToMinimumDistance(std::vector<SystemNode> & systems)
+static void SortToMinimumDistance(std::vector<SystemNode> & systems)
 {
   Matrix<float> distanceMatrix(systems.size() + 2, systems.size() + 2, 0.0);
   for (size_t i = 0; i < systems.size(); i++)

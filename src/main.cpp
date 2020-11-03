@@ -415,7 +415,7 @@ void DoSystemWindow(GUIData &guiData)
 
 void DoOutputWindow(GUIData & guiData)
 {
-  static char buf[2048] = {}; // TODO temp buffer for now, but come up with a better solution
+  static char buf[2048] = {}; // TODO Simple buffer for now, but come up with a better solution. 
 
   ImGui::SetNextWindowPos(ImVec2(839, 70));
   ImGui::SetNextWindowSize(ImVec2(350, 515));
@@ -439,9 +439,7 @@ void DoOutputWindow(GUIData & guiData)
   ImGui::SameLine();
 
   if (ImGui::Button("Save##Output", ImVec2(100, 25)))
-  {
     ImGui::OpenPopup("Save to file");
-  }
 
   ImGui::PushID(1);
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(0, 200, 0)));
