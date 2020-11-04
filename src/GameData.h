@@ -57,7 +57,7 @@ struct GameData
 extern GameData g_GameData;
 
 bool LoadGameData(std::wstring const & filePath);
-const std::vector<std::string> * GetParsingMessages();
+std::vector<std::string> const & GetParsingMessages();
 std::string GetEngineerFromSystem(std::string const & system);
 
 #endif

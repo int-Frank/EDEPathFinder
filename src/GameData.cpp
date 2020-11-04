@@ -442,7 +442,7 @@ bool LoadGameData(std::wstring const & filePath)
   return true;
 }
 
-const std::vector<std::string> * GetParsingMessages()
+std::vector<std::string> const & GetParsingMessages()
 {
-  return &errorMessages;
+  return errorMessages;
 }

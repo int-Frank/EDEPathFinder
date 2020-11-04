@@ -197,7 +197,7 @@ bool Init()
   if (!loadSuccess)
   {
     std::stringstream ss;
-    for (auto const & str : *GetParsingMessages())
+    for (auto const & str : GetParsingMessages())
       ss << "\n" << str;
     Alert("Error! Failed to load data file. GameData::Load() returned the following error messages:\n%s", ss.str().c_str());
   }
