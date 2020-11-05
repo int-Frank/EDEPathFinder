@@ -91,6 +91,7 @@ void Alert(char const * format, ...)
 bool InitGuiData(GUIData & data)
 {
   size_t i = 0;
+  std::set<std::string> strSet;
 
   data.ppSystems = new char * [g_GameData.systems.size()];
   data.systemsCount = (int)g_GameData.systems.size();
@@ -103,26 +104,29 @@ bool InitGuiData(GUIData & data)
     i++;
   }
 
-  data.ppEngineerClasses = new char * [g_GameData.engineerClasses.size()];
-  data.engineerClassCount = (int)g_GameData.engineerClasses.size();
+  for (auto const & kv : g_GameData.engineers)
+    strSet.insert(kv.second.Class);
+
+  data.ppEngineerClasses = new char * [strSet.size()];
+  data.engineerClassCount = (int)strSet.size();
 
   i = 0;
-  for (auto const & str : g_GameData.engineerClasses)
+  for (auto const & str : strSet)
   {
     data.ppEngineerClasses[i] = new char[str.size() + 1]{};
     sprintf(data.ppEngineerClasses[i], "%s", str.c_str());
     i++;
   }
 
-  std::set<std::string> moduleClasses;
+  strSet.clear();
   for (auto const & kv : g_GameData.modules)
-    moduleClasses.insert(kv.second.Class);
+    strSet.insert(kv.second.Class);
 
-  data.ppModuleClasses = new char * [moduleClasses.size()];
-  data.moduleClassCount = (int)moduleClasses.size();
+  data.ppModuleClasses = new char * [strSet.size()];
+  data.moduleClassCount = (int)strSet.size();
 
   i = 0;
-  for (auto const & str : moduleClasses)
+  for (auto const & str : strSet)
   {
     data.ppModuleClasses[i] = new char[str.size() + 1]{};
     sprintf(data.ppModuleClasses[i], "%s", str.c_str());
@@ -254,7 +258,7 @@ void DoEngineersWindow(GUIData & guiData)
     g_GameData.selectedEngineers.clear();
     for (auto const & ekv : g_GameData.engineers)
     {
-      if (ekv.second.Class != g_GameData.engineerClasses[engineerClassIndex])
+      if (ekv.second.Class != guiData.ppEngineerClasses[engineerClassIndex])
         continue;
 
       g_GameData.selectedEngineers.insert(ekv.first);
@@ -280,7 +284,7 @@ void DoEngineersWindow(GUIData & guiData)
   bool sameLine = false;
   for (auto const & ekv : g_GameData.engineers)
   {
-    if (ekv.second.Class != g_GameData.engineerClasses[engineerClassIndex])
+    if (ekv.second.Class != guiData.ppEngineerClasses[engineerClassIndex])
       continue;
 
     if (sameLine)

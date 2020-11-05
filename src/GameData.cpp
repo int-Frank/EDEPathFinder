@@ -422,23 +422,6 @@ bool LoadGameData(std::wstring const & filePath)
     PEEK(c);
   } while (c != '}');
 
-  g_GameData.engineerClasses.clear();
-  for (auto const & kv : g_GameData.engineers)
-  {
-    bool found = false;
-    for (auto const & str : g_GameData.engineerClasses)
-    {
-      if (str == kv.second.Class)
-      {
-        found = true;
-        break;
-      }
-    }
-
-    if (!found)
-      g_GameData.engineerClasses.push_back(kv.second.Class);
-  }
-
   return true;
 }
 

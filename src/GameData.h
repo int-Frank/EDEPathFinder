@@ -44,8 +44,6 @@ struct GameData
   ModuleMap modules;
   EngineerMap engineers;
 
-  std::vector<std::string> engineerClasses;
-
   std::string moduleClassDesc;
   std::string engineerClassDesc;
 
