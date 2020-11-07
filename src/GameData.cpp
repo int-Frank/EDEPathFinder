@@ -6,14 +6,15 @@
 GameData g_GameData;
 
 static std::vector<std::string> errorMessages = {};
+static char g_errorBuf[1024] = {};
 
-#define PUSH_ERROR_MESSAGE(str, ...) do {char _buf[256] = {}; sprintf(_buf, str, __VA_ARGS__); errorMessages.push_back(std::string(_buf));} while (false)
+#define PUSH_ERROR_MESSAGE(str, ...) do {sprintf(g_errorBuf, str, __VA_ARGS__); errorMessages.push_back(std::string(g_errorBuf));} while (false)
 #define KILL(str, ...) do { PUSH_ERROR_MESSAGE(str, __VA_ARGS__); return false;} while (false)
 
 #define GET_NEXT(c) do {if (!ifs.get(c).good()) KILL("GET_NEXT failed to read a character");} while (false)
 #define GET_NEXT_IGNORE_WS(c) do {ifs >> std::ws >> c; if (!ifs.good()) KILL("GET_NEXT_IGNORE_WS failed to read a character");} while (false)
 #define CHECK(fn) do {if (!fn) KILL(#fn " failed" );} while(false)
-#define PEEK(c) do {ifs >> std::ws; int intChar = ifs.peek(); if (intChar == EOF) KILL("PEEK failed to read a character"); c = char(intChar);} while (false)
+#define PEEK(c) do {ifs >> std::ws; int _intChar = ifs.peek(); if (_intChar == EOF) KILL("PEEK failed to read a character"); c = char(_intChar);} while (false)
 #define ASSERT_NEXT(c)      do {char _tempChar = 0; PEEK(_tempChar); if (_tempChar != c) KILL("Invalid token. Expected '%c' got '%c'", c, _tempChar); if (!ifs.good()) KILL("ASSERT_NEXT failed to read character."); GET_NEXT_IGNORE_WS(_tempChar);} while (false)
 #define DISCARD_NEXT_IF(c)  do {char _tempChar = 0; PEEK(_tempChar); if (_tempChar == c) GET_NEXT_IGNORE_WS(_tempChar);} while (false)
 #define BREAK_ON(c) {char _tempChar = 0; PEEK(_tempChar); if (_tempChar == c) {GET_NEXT_IGNORE_WS(_tempChar); break;}}
@@ -240,7 +241,7 @@ bool ReadEngineerModule(std::ifstream & ifs, std::string & name, int & grade)
     {
       int temp = -1;
       READ_NUMBER(grade);
-      if (temp > 0 && temp <= 5)
+      if (temp > 0)
         grade = temp;
     }
     else
